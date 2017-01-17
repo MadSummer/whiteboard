@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<title>NodeJS & WebSocket</title>
+		<meta name="description" content="" />
+		<meta name="author" content="可乐加糖" />
+		<meta name="viewport" content="width=device-width; initial-scale=1.0" />
+		<!-- Replace favicon.ico & apple-touch-icon.png in the root of your domain and delete these references -->
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<script src="//cdn.bootcss.com/socket.io/1.5.1/socket.io.js"></script>
+		<script src="//cdn.bootcss.com/jquery/3.1.1/jquery.min.js"></script>
+		<script type="text/javascript">
+			$(function () {
+			var socket = io.connect('http://192.168.1.38:8888');
+			var canvas = document.getElementById('canvas');
+			var ctx = canvas.getContext('2d');
+			var pos =[{
+				x:'',
+				y:''
+			}];
+			socket.on('server', function (data) {
+					switch (data.type) {
+						case 'pencil':
+							pencil(data.pos)
+							break;
+						default:
+							break;
+					}
+			});
+			socket.on('his',function(data){
+				for(var i =0 ; i<data.length; i++){
+						pencil(data[i].pos)
+				}
+			})
+			function pencil(data) {
+				ctx.moveTo(data[1]['x'], data[1]['y']);
+				for(var i = 1 ; i < data.length ; i++){
+					ctx.lineTo(data[i]['x'], data[i]['y']);
+					ctx.stroke();
+				}
+			}
+			$(canvas).on('mousedown', function (ev) {
+				$(this).data('flag',1);
+				pos.push(getMousePos(ev));
+				console.log(pos)
+				ctx.moveTo(pos[1]['x'], pos[1]['y']);
+				
+			});
+			$(canvas).on('mouseup', function () {
+				$(this).data('flag',0);
+				socket.emit('client',{
+					type:'pencil',
+					pos:pos
+				})
+				pos = [{
+					x: '',
+					y:''
+				}] ;
+			});
+			$(canvas).on('mousemove', function (ev) {
+				if($(this).data('flag') == '1'){
+					pos.push(getMousePos(ev));
+					ctx.lineTo(pos[pos.length-1]['x'], pos[pos.length-1]['y']);
+					ctx.stroke();
+				}		
+			})
+			function getMousePos(evt) { 
+			var rect = canvas.getBoundingClientRect(); 
+			return {
+				x: evt.clientX - rect.left * (canvas.width / rect.width),
+				y: evt.clientY - rect.top * (canvas.height / rect.height)
+			}
+		}
+		})
+		</script>
+	</head>
+
+	<body>
+		<canvas id="canvas" width="500" height="500" style="border:3px solid #ccc;"></canvas>
+	</body>
+
+</html>
