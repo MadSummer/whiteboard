@@ -37,12 +37,31 @@ function Draw(o) {
 };
 Draw.prototype = {
   ep: ep,
+  data: {
+    undoArr: [],
+    redoArr: [],
+    setings:defaultConfig
+  },
+  methods: {
+    undo: function (action) {
+      this.data.undoArr.push(action)
+    },
+    redo: function (action) {
+      this.data.redoArr.push(action)
+    }
+  },
+  register: function () {
+    this.ep.on('setting.change', this.methods.changeSetting);
+    this.ep.on('undo', this.methods.undo);
+    this.ep.on('redo', this.methods.redo);
+    this.ep.on('add', this.methods.draw);
+    this.ep.on('remove',this.methods.)
+  },
   init: function (o) {
     //创建fabric canvas
     if (!this.check()) return;
     this.initFabric();
     this.ctx = this.canvas.upperCanvasEl.getContext('2d');
-    this.ep.on('setting.change', this.changeSetting);
   },
   check: function () {
     if (!this.config.id) return this.throw('初始化参数不正确');
@@ -58,7 +77,6 @@ Draw.prototype = {
       var object = null,
         objects = this.getObjects();
       for (var i = 0; i < this.size(); i++) {
-        console.log(objects[i]['id'])
         if (objects[i]['id'] && objects[i]['id'] === id) {
           object = objects[i];
           break;
@@ -67,13 +85,13 @@ Draw.prototype = {
       return object;
     };
   },
-  changeSetting: function (settings) {
-    for (let k in settings) {
-      this.setting[k] = settings[k];
+  changeSetting: function (s) {
+    for (let k in s) {
+      this.settings[k] = s[k];
     }
   },
-  setting: defaultConfig,
   draw: function (data) {
+    
     switch (data.type) {
       case 'pencil':
 
