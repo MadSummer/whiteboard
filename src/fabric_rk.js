@@ -4,9 +4,9 @@
   var body = document.body;
   var draw = {
     // 当前显示的画布
-    canvas: null,
+    canvas: null, 
     // 实际绘制的画布
-    ctx: null,
+    ctx: null, 
     // 绘制颜色
     color: '#000',
     // 绘制线宽

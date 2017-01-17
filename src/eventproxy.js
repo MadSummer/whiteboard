@@ -6,7 +6,7 @@ EventProxy.prototype = {
     let event = this.event[evt];
     if (!event instanceof Array) return;
     event.cbs.forEach(cb => {
-      cb(data)
+      cb(data);
     })
   },
   on: function (evt, cb) {

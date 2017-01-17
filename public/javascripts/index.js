@@ -1,11 +1,12 @@
 //draw.init('canvas', 'whiteboard');
-
+var draw
 $(document).ready(function () {
   var width = parseInt($('#whiteboard').css('width'));
   var height = parseInt($('#whiteboard').css('height')) || 600;
   $('#whiteboard').attr('width', width);
-  $('#whiteboard').attr('height',height)
-  draw.init('whiteboard');
+  $('#whiteboard').attr('height', height);
+  draw = new Draw({ id: 'whiteboard' });
+  draw.init();
   // 颜色选择器
   $('.fa-circle').colpick({
     flat: false,
@@ -119,7 +120,7 @@ $(document).ready(function () {
   // 
   //
   // 监听
-  var socket = io.connect('http://192.168.1.38:8888');
+  var socket = io.connect('http://192.168.1.38:6666');
   socket.on('server', function (msg) {
     switch (msg.type) {
       case 'member':
