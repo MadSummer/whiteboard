@@ -14,7 +14,9 @@ $(document).ready(function () {
     submit: 0,
     showEvent: 'mouseover',
     onChange: function (hsb, hex, rgb, el, bySetColor) {
-      draw.color = '#' + hex;
+      draw.ep.fire('setting:modified', {
+        color:'#' + hex
+      })
       $('.fa-circle').css('color', draw.color);
     }
   });
