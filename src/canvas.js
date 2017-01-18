@@ -3,24 +3,19 @@ const doc = document;
 const body = doc.body;
 const EventProxy = require('./eventproxy');
 const defaultConfig = {
-  id: '',
-  fabric: {
-    width: 500,
-    height: 375,
-    startX: 0,
-    startY: 0,
-    endx: 0,
-    endY: 0,
-  },
-  setting: {
-    undoMax: 10,
-    type: 'pencil',
-    fontSize: 16,
-    lineWidth: 2,
-    color: '#222',
-    fillColor: 'rgba(0, 0, 0, 0)',
-    isDrawingMode: true,
-  }
+  width: 500,
+  height: 375,
+  startX: 0,
+  startY: 0,
+  endx: 0,
+  endY: 0,
+  undoMax: 10,
+  type: 'pencil',
+  fontSize: 16,
+  lineWidth: 2,
+  color: '#222',
+  fillColor: '',
+  isMouseDown: false
 }
 
 /**
@@ -38,19 +33,11 @@ const defaultConfig = {
   }
  */
 function Draw(o) {
-  this.config = defaultConfig;
-  this.config.id = o.id;
-  if (o.fabric instanceof Object) {
-    for (let k in o.fabric) {
-      this.config.fabric[k] = o.fabric[k];
-    }
-  }
-  if (o.setting instanceof Object) {
-    for (let k in o.setting) {
-      this.config.setting[k] = o.setting[k];
-    }
-  }
-};
+  if (!o instanceof Object) return console.error('参数不正确');
+  let instance = this;
+  instance.id = o.id;
+  instance.__setting = defaultConfig;
+}
 
 /**
  * 
@@ -60,18 +47,75 @@ function Draw(o) {
  */
 function init() {
   //创建fabric canvas
-  if (!check.apply(this)) return console.error('参数配置有误');
+  if (!check(this.id)) return console.error('参数配置有误');
+  let instance = this;
   initFabric.apply(this);
   listener(this);
+  addSetter(instance)
 }
 
+/**
+ * 
+ * 给实例的setting设置一个setter方法
+ * @param {any} instance
+ * fabric实例
+ */
+function addSetter(instance) {
+  Object.defineProperty(instance, 'setting', {
+    get: function () {
+      return instance.__setting;
+    },
+    set: function (o) {
+      if (!o instanceof Object) return console.error('参数错误');
+      for (let k in o) {
+        let v = o[k];
+        instance.__setting[k] = v;
+        switch (k) {
+          case 'width':
+            instance.canvas.setWidth(v);
+            break;
+          case 'height':
+            instance.canvas.setHeight(v);
+            break;
+          case 'color':
+            instance.canvas.freeDrawingBrush.color = v;
+            break;
+          case 'type':
+            instance.canvas.isDrawingMode = false;
+            switch (v) {
+              case 'pencil':
+                instance.canvas.isDrawingMode = true;
+                break;
+              case 'clear':
+                instance.canvas.clear();
+                break;
+              case 'eraser':
+                instance.canvas.selectable = true
+                break;
+              default:
+                break;
+            }
+            break;
+          case 'lineWidth':
+            this.canvas.freeDrawingBrush.width = parseInt(v) || 2;
+            break;
+          case 'lineWidth':
+            this.canvas.freeDrawingBrush.width = parseInt(s[k]) || 2;
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  });
+  instance.setting = instance.__setting;
+}
 /**
  * 
  * 检查传入的参数是否正确（是否为对象，是否找得到对应的元素）
  * @returns
  */
-function check() {
-  let id = this.config.id;
+function check(id) {
   if (!id) return console.error('初始化参数不正确');
   let container = doc.getElementById(id);
   return container === null ? false : true;
@@ -81,31 +125,19 @@ function check() {
  * 初始化时监听的事件
  */
 function listener(instance) {
-  let self = instance;
-  let canvasEvt = {
-    'canvas:modified': 'canvasModified',
+  let evt = {
     'mouse:down': 'mousedown',
     'mouse:up': 'mouseup',
     'mouse:move': 'mousemove',
     'object:added': 'objectAdded',
     'object:modified': 'objectModified',
-    'object:removed': 'objectRemoved'
+    'object:removed': 'objectRemoved',
   }
-  for (let x in canvasEvt) {
-    self.canvas.on(x, function (opt) {
-      let handler = canvasEventHandler[canvasEvt[x]];
+  for (let x in evt) {
+    instance.canvas.on(x, function (opt) {
+      let handler = eventHandler[evt[x]];
       if (!handler) return;
-      handler.apply(self,[opt]);
-    });
-  }
-  let instanceEvt = {
-    'setting:modified': 'settingModified'
-  }
-  for (let x in instanceEvt) {
-    self.ep.on(x, function (opt) {
-      let handler = instanceEventHandler[instanceEvt[x]];
-      if (!handler) return;
-      handler(self,[opt]);
+      handler.apply(instance, [opt]);
     });
   }
 }
@@ -115,8 +147,9 @@ function listener(instance) {
  * 初始化fabric
  */
 function initFabric() {
-  let id = this.config.id;
-  this.canvas = new fabric.Canvas(id, this.config.fabric);
+  let id = this.id;
+  delete this.id;
+  this.canvas = new fabric.Canvas(id);
   this.ctx = this.canvas.upperCanvasEl.getContext('2d');
   // 增加原型方法
   fabric.Canvas.prototype.getItemById = function (id) {
@@ -136,7 +169,6 @@ function initFabric() {
     return objects[objects.length - 1];
   };
 }
-
 
 /**
  * 绘制函数
@@ -230,33 +262,42 @@ function render(data) {
       break;
   }
 }
-let instanceEventHandler = {
-  settingModified: function (s) {
-    for (let k in s) {
-      this.config.setting[k] = s[k];
-    }
-  }
-}
-let canvasEventHandler = {
-  canvasModified: function (s) {
-    for (let k in s) {
-      this[k] = s[k];
-    }
-  },
+let eventHandler = {
   mousedown: function (opt) {
-    this.trigger('canvas:modified', {
+    console.log(opt);
+    this.setting = {
       startX: opt.e.clientX - draw.canvas._offset.left,
-      startY: opt.e.clientY - draw.canvas._offset.top
-    });
+      startY: opt.e.clientY - draw.canvas._offset.top,
+      isMouseDown: true
+    }
+    switch (this.setting.type) {
+      case 'eraser':
+        opt.target && opt.target.remove();
+        break;
+
+      default:
+        break;
+    }
   },
   mouseup: function (opt) {
-    this.trigger('canvas:modified', {
+    this.setting = {
       endX: opt.e.clientX - draw.canvas._offset.left,
-      endY: opt.e.clientY - draw.canvas._offset.top
-    });
+      endY: opt.e.clientY - draw.canvas._offset.top,
+      isMouseDown: false
+    }
+  },
+  mousemove: function () {
+    this.setting = {};
   },
   objectAdded: function (o) {
     o.target.id = new Date().getTime() + Math.floor(Math.random() * 10);
+    console.log(o.target.id, 'Is Added');
+  },
+  objectRemoved: function (o) {
+    console.log(o.target.id, 'Is Removed');
+  },
+  objectModified: function (o) {
+    console.log(o.target.id, 'Is Modified')
   }
 }
 

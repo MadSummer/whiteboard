@@ -7,84 +7,54 @@ $(document).ready(function () {
   $('#whiteboard').attr('height', height);
   draw = new Draw({ id: 'whiteboard' });
   draw.init();
-  // 颜色选择器
-  $('.fa-circle').colpick({
-    flat: false,
-    layout: 'hex',
-    submit: 0,
-    showEvent: 'mouseover',
-    onChange: function (hsb, hex, rgb, el, bySetColor) {
-      draw.ep.fire('setting:modified', {
-        color:'#' + hex
-      })
-      $('.fa-circle').css('color', draw.color);
-    }
-  });
-  $('.fa-circle').colpickHide();
-  $('.colpick ').mouseleave(function (ev) {
-    $('.fa-circle').colpickHide(ev);
-    return false;
-  })
+
   // 注册事件
   $('#drawController').on('click', function (e) {
     var type = $(e.target).attr('data-type');
-    var opt = $(e.target).attr('data-opt');
     $('#drawController i').removeClass('active');
     $(e.target).addClass('active');
-    fabric.Object.prototype.selectable = false;
-    draw.canvas.perPixelTargetFind = true;
-    if (type) {
-      draw.type = type;
-    }
-    if (type == 'pencil') {
-      draw.startFreeDraw();
-    }
-    if (opt) {
+    //fabric.Object.prototype.selectable = false;
+    //draw.canvas.perPixelTargetFind = true;
+    /*if (opt) {
       fabric.Object.prototype.selectable = true;
       draw.canvas.perPixelTargetFind = false;
-    }
-    switch (opt) {
-      case 'select':
-        draw.type = 'select';
-        sync({
-          type: 'select'
+    }*/
+    switch (type) {
+      case 'pencil':
+        draw.canvas.fire('setting:modified', {
+          type:'pencil'
+        })
+        break;
+      case 'line':
+        draw.canvas.fire('setting:modified', {
+          type:'line'
         })
         break;
       case 'clear':
-        draw.clear();
-        sync({
+        draw.canvas.fire('setting:modified', {
           type:'clear'
         })
         break;
-      case 'undo':
-        draw.undo();
-        sync({
-          type: 'undo'
-        });
-        break;
-      case 'redo':
-        draw.redo();
-        sync({
-          type: 'redo'
-        });
-        break;
       case 'size':
-        draw.lineWidth = parseInt($(e.target).text());
-        if (draw.type == 'pencil') {
-          draw.startFreeDraw();
-        }
+        draw.canvas.fire('setting:modified', {
+          lineWidth: parseInt($(e.target).text())
+        })
         break;
       case 'eraser':
-        sync({
-          type: 'eraser',
-          index: draw.canvas.getObjects().indexOf(draw.canvas.getActiveObject())
-        });
-        draw.eraser();
+        draw.canvas.fire('setting:modified', {
+          type: 'eraser'
+        })
         break;
       default:
         break;
     }
   });
+  document.getElementById('chooseColor').onchange = function () {
+    var color = this.value;
+    draw.canvas.fire('setting:modified', {
+      color:$(this).val()
+    })
+  }
   $('.size').hover(function () {
     $(this).find('ul').removeClass('hidden')
   }, function () {
@@ -122,7 +92,7 @@ $(document).ready(function () {
   // 
   //
   // 监听
-  var socket = io.connect('http://192.168.1.38:6666');
+  var socket = io.connect('http://192.168.1.38:7777');
   socket.on('server', function (msg) {
     switch (msg.type) {
       case 'member':

@@ -2,7 +2,7 @@
 let express = require('express');
 let router = express.Router();
 
-let server = require('http').createServer(function () { }).listen(6666)
+let server = require('http').createServer(function () { }).listen(7777)
 let io = require('socket.io')(server);
 io.sockets.on('connection', function (socket) {
   io.sockets.emit('server', {
