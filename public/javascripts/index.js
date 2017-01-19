@@ -5,68 +5,43 @@ $(document).ready(function () {
   var height = parseInt($('#whiteboard').css('height')) || 600;
   $('#whiteboard').attr('width', width);
   $('#whiteboard').attr('height', height);
-  draw = new Draw({ id: 'whiteboard' });
+  draw = new Draw({
+    id: 'whiteboard'
+  });
   draw.init();
 
   // 注册事件
   $('#drawController').on('click', function (e) {
     var type = $(e.target).attr('data-type');
-    $('#drawController i').removeClass('active');
-    $(e.target).addClass('active');
-    //fabric.Object.prototype.selectable = false;
-    //draw.canvas.perPixelTargetFind = true;
-    /*if (opt) {
-      fabric.Object.prototype.selectable = true;
-      draw.canvas.perPixelTargetFind = false;
-    }*/
-    switch (type) {
-      case 'pencil':
-        draw.canvas.fire('setting:modified', {
-          type:'pencil'
-        })
-        break;
-      case 'line':
-        draw.canvas.fire('setting:modified', {
-          type:'line'
-        })
-        break;
-      case 'clear':
-        draw.canvas.fire('setting:modified', {
-          type:'clear'
-        })
-        break;
-      case 'size':
-        draw.canvas.fire('setting:modified', {
-          lineWidth: parseInt($(e.target).text())
-        })
-        break;
-      case 'eraser':
-        draw.canvas.fire('setting:modified', {
-          type: 'eraser'
-        })
-        break;
-      default:
-        break;
+    var action = $(e.target).attr('data-action')
+    if (type) {
+      $('#drawController i').removeClass('active');
+      $(e.target).addClass('active');
+      draw.setting = {
+        type: type
+      }
+    }
+    if (action) {
+      if (action === 'clear') {
+        draw.clear()
+      }
+      if (action === 'size') {
+        draw.setting = {
+          strokeWidth:parseInt($(e.target).text())
+        }
+      }
     }
   });
-  document.getElementById('chooseColor').onchange = function () {
-    var color = this.value;
-    draw.canvas.fire('setting:modified', {
-      color:$(this).val()
-    })
-  }
+  $('#chooseColor').on('change', function () {
+    draw.setting = {
+      strokeColor: $(this).val()
+    }
+  })
   $('.size').hover(function () {
     $(this).find('ul').removeClass('hidden')
   }, function () {
     $(this).find('ul').addClass('hidden')
   })
-  draw.canvas.on('mouse:down', draw.mousedown);
-  draw.canvas.on('mouse:move', draw.mousemove);
-  draw.canvas.on('mouse:up', draw.mouseup);
-  draw.canvas.on('object:added', draw.addObject);
-  draw.canvas.on('object:modified', draw.modifiedObject);
-  draw.canvas.on('object:removed', draw.removeObject);
-  draw.canvas.on('object:selected', draw.selectObject);
   $('.upper-canvas').click(function (e) {
     if (draw.type == 'text' && $('#input').is(':hidden')) {
       $('#input').css({
@@ -75,8 +50,7 @@ $(document).ready(function () {
       }).show().focus();
       $('#input').attr('data-x', draw.startX);
       $('#input').attr('data-y', draw.startY);
-    }
-    else {
+    } else {
       $('#input').hide();
     }
   });
@@ -86,7 +60,7 @@ $(document).ready(function () {
     }
     var x = +$(this).attr('data-x');
     var y = +$(this).attr('data-y');
-    draw.text($(this).val(),x,y);
+    draw.text($(this).val(), x, y);
     $(this).val('');
   })
   // 
@@ -121,6 +95,7 @@ $(document).ready(function () {
         break;
     }
   })
+
   function sync(opt) {
     socket.emit('client', opt)
   }

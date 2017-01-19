@@ -17,19 +17,19 @@
 			</h1>
 			<h3>在线人数:<span id="member">0</span></h3>
 			<div id="drawController">
-				<i class="fa fa-pencil" title="铅笔" data-type="pencil"></i>
+				<i class="fa fa-pencil active" title="铅笔" data-type="pencil"></i>
 				<i class="fa fa-minus" title="直线" data-type="line"></i>
 				<i class="fa fa-circle-thin " title="圆" data-type="circle"></i>
 				<i class="fa fa-square-o" title="方" data-type="square"></i>
-				<input type="color" id="chooseColor" name="chooseColor" value="#005E7A">
+				<input type="color" id="chooseColor" name="chooseColor" value="#222222">
 				<i class="fa fa-eraser" title="删除" data-type="eraser"></i>
-				<i class="fa fa-trash" title="清空" data-type="clear"></i>
+				<i class="fa fa-trash" title="清空" data-action="clear"></i>
 				<i class="fa fa-minus size" title="线条粗细">
           <ul class="list-group hidden">
-            <li class="list-group-item" data-opt="size">1px</li>
-            <li class="list-group-item" data-opt="size">3px</li>
-            <li class="list-group-item" data-opt="size">5px</li>
-            <li class="list-group-item" data-opt="size">15px</li>
+            <li class="list-group-item" data-action="size">1px</li>
+            <li class="list-group-item" data-action="size">3px</li>
+            <li class="list-group-item" data-action="size">5px</li>
+            <li class="list-group-item" data-action="size">15px</li>
           </ul>
         </i>
 				<i class="fa fa-undo" title="撤销" data-opt="undo"></i>
