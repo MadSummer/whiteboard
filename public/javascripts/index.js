@@ -8,7 +8,9 @@ $(document).ready(function () {
   draw = new Draw({
     id: 'whiteboard'
   });
-  draw.init();
+  draw.init({
+    strokeColor:'red'
+  });
 
   // 注册事件
   $('#drawController').on('click', function (e) {

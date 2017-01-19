@@ -16,7 +16,8 @@ const DEFAULT_CONFIG = {
   strokeColor: '#222',
   fillColor: '',
   isMouseDown: false,
-  action: null
+  action: null,
+  cbs: []
 }
 const ALL_TYPE = {
   'pencil': 'pencil',
@@ -50,9 +51,10 @@ const Allevt = {
  */
 function Draw(o) {
   if (!o instanceof Object) return console.error('参数不正确');
-  let instance = this;
-  instance.id = o.id;
-  instance.__setting = DEFAULT_CONFIG;
+  this.id = o.id;
+
+  this.__setting = DEFAULT_CONFIG;
+
 }
 
 /**
@@ -61,12 +63,19 @@ function Draw(o) {
  * @returns
  * 
  */
-function init() {
+function init(o) {
   //创建fabric canvas
   if (!check(this.id)) return console.error('参数配置有误');
+
   initFabric(this);
+
   listener(this);
-  defineSetter(this)
+
+  defineSetter(this);
+
+  for (let k in  o) {
+    this.setting= o;
+  }
 }
 
 /**
@@ -99,7 +108,7 @@ function defineSetter(instance) {
             instance.canvas.isDrawingMode = false;
             instance.canvas.hoverCursor = 'default';
             instance.canvas.selectable = false;
-            if (ALL_TYPE.pencil === v) { 
+            if (ALL_TYPE.pencil === v) {
               instance.canvas.isDrawingMode = true;
             }
             if (ALL_TYPE.eraser === v) {
@@ -217,8 +226,8 @@ function render(o) {
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, startY);
         ctx.lineTo(endX, endY);
-        ctx.lineTo(startX,endY);
-        ctx.lineTo(startX,startY);
+        ctx.lineTo(startX, endY);
+        ctx.lineTo(startX, startY);
       default:
         break;
     }

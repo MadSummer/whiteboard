@@ -66,7 +66,8 @@
 		strokeColor: '#222',
 		fillColor: '',
 		isMouseDown: false,
-		action: null
+		action: null,
+		cbs: []
 	};
 	var ALL_TYPE = {
 		'pencil': 'pencil',
@@ -100,9 +101,9 @@
   */
 	function Draw(o) {
 		if (!o instanceof Object) return console.error('参数不正确');
-		var instance = this;
-		instance.id = o.id;
-		instance.__setting = DEFAULT_CONFIG;
+		this.id = o.id;
+
+		this.__setting = DEFAULT_CONFIG;
 	}
 
 	/**
@@ -111,12 +112,19 @@
   * @returns
   * 
   */
-	function init() {
+	function init(o) {
 		//创建fabric canvas
 		if (!check(this.id)) return console.error('参数配置有误');
+
 		initFabric(this);
+
 		listener(this);
+
 		defineSetter(this);
+
+		for (var k in o) {
+			this.setting = o;
+		}
 	}
 
 	/**
