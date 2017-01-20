@@ -4,7 +4,7 @@ function EventProxy() {
 EventProxy.prototype = {
   fire: function (evt, data) {
     let event = this.event[evt];
-    if (!event instanceof Array) return;
+    if (!event) return;
     event.cbs.forEach(cb => {
       cb(data);
     })

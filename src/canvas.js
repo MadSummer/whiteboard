@@ -1,5 +1,6 @@
 const version = require('./version');
 const cursor = require('./cursor');
+const ep = require('./eventproxy');
 const global = window;
 const doc = document;
 const DEFAULT_CONFIG = {
@@ -16,8 +17,7 @@ const DEFAULT_CONFIG = {
   strokeColor: '#222',
   fillColor: '',
   isMouseDown: false,
-  action: null,
-  cbs: []
+  action: null
 }
 const ALL_TYPE = {
   'pencil': 'pencil',
@@ -27,7 +27,7 @@ const ALL_TYPE = {
   'eraser': 'eraser',
   'clear': 'clear',
 }
-const Allevt = {
+const All_EVT = {
   'mouse:down': 'mousedown',
   'mouse:up': 'mouseup',
   'mouse:move': 'mousemove',
@@ -36,6 +36,7 @@ const Allevt = {
   'object:added': 'objectAdded',
   'object:modified': 'objectModified',
   'object:removed': 'objectRemoved',
+  'objects:removed': 'objectsRemoved'
 }
 /**
  * 
@@ -49,34 +50,15 @@ const Allevt = {
     fillColor => 填充颜色 || rgba(0,0,0,0)
   }
  */
-function Draw(o) {
-  if (!o instanceof Object) return console.error('参数不正确');
-  this.id = o.id;
+function WhiteBoard(o) {
 
   this.__setting = DEFAULT_CONFIG;
 
+  this.init(o);
+
 }
 
-/**
- * 
- * 实例化一个fabric canvas
- * @returns
- * 
- */
-function init(o) {
-  //创建fabric canvas
-  if (!check(this.id)) return console.error('参数配置有误');
 
-  initFabric(this);
-
-  listener(this);
-
-  defineSetter(this);
-
-  for (let k in  o) {
-    this.setting= o;
-  }
-}
 
 /**
  * 
@@ -129,24 +111,14 @@ function defineSetter(instance) {
   });
   instance.setting = instance.__setting;
 }
-/**
- * 
- * 检查传入的参数是否正确（是否为对象，是否找得到对应的元素）
- * @returns
- */
-function check(id) {
-  if (!id) return console.error('初始化参数不正确');
-  let container = doc.getElementById(id);
-  return container === null ? false : true;
-}
 
 /**
  * 初始化时监听的事件
  */
 function listener(instance) {
-  for (let x in Allevt) {
+  for (let x in All_EVT) {
     instance.canvas.on(x, function (opt) {
-      let handler = eventHandler[Allevt[x]];
+      let handler = eventHandler[All_EVT[x]];
       if (!handler) return;
       handler.apply(instance, [opt]);
     });
@@ -165,7 +137,7 @@ function initFabric(instance) {
   });
   fabric.Object.prototype.selectable = false;
   instance.ctx = instance.canvas.upperCanvasEl.getContext('2d');
-  // 增加原型方法
+  // 增加原型方法 getItemById
   fabric.Canvas.prototype.getItemById = function (id) {
     let object = null;
     let objects = this.getObjects();
@@ -177,11 +149,142 @@ function initFabric(instance) {
     }
     return object;
   };
-  //增加原型方法
+  //增加原型方法 getLastItem
   fabric.Canvas.prototype.getLastItem = function () {
     let objects = this.getObjects();
     return objects[objects.length - 1];
   };
+  //增加原型方法 removeAllObjects
+
+  /**
+   * 
+   * 
+   * @param {any} removeBg
+   * 是否删除背景图 默认为false
+   */
+  fabric.Canvas.prototype.removeAllObjects = function (removeBg) {
+
+    let objects = this.getObjects();
+    try {
+      this.fire('objects:removed', {
+        target: objects
+      });
+    } catch (error) {
+
+    }
+
+    let bgi = this.backgroundImage;
+    this.clear();
+    if (!removeBg && bgi) {
+      this.setBackgroundImage(bgi, this.renderAll.bind(this));
+    }
+
+  };
+}
+
+let eventHandler = {
+  //所有回调事件都通过各自分发，做进一步管控解耦
+
+  mousedown: function (opt) {
+    // `this` is a instance of WhiteBoard ,use apply bind runtime context
+    this.setting = {
+      startX: opt.e.clientX - this.canvas._offset.left,
+      startY: opt.e.clientY - this.canvas._offset.top,
+      isMouseDown: true
+    }
+    if (this.setting.type === ALL_TYPE.eraser) {
+      opt.target && opt.target.remove();
+    }
+    this.ep.fire('mouse:down', {
+      object: opt.target
+    });
+  },
+  mouseup: function (opt) {
+    this.setting = {
+      endX: opt.e.clientX - this.canvas._offset.left,
+      endY: opt.e.clientY - this.canvas._offset.top,
+      isMouseDown: false
+    }
+    this.render();
+
+    this.ep.fire('mouse:up', {
+      object: opt.target
+    });
+  },
+  mousemove: function (opt) {
+    if (!this.setting.isMouseDown) return;
+    let endX = opt.e.clientX - this.canvas._offset.left;
+    let endY = opt.e.clientY - this.canvas._offset.top;
+    //解决出界的效果
+    // 如果是圆呢？
+    // endX > this.setting.width ? endX = this.setting.width : endX = endX;
+    // endY > this.setting.height ? endY = this.setting.height : endY = endY;
+    this.setting = {
+      endX: endX,
+      endY: endY,
+      isMouseDown: true
+    }
+    this.render();
+    this.ep.fire('mouse:move', {
+      object: opt.target
+    });
+  },
+  mouseover: function () {
+    this.ep.fire('mouse:over');
+  },
+  mouseout: function () {
+    this.ep.fire('mouse:out');
+  },
+  objectAdded: function (o) {
+    o.target.id = new Date().getTime() + Math.floor(Math.random() * 10);
+    this.ep.fire('object:added', {
+      object: o.target
+    });
+  },
+  objectRemoved: function (o) {
+    this.ep.fire('object:removed', {
+      object: o.target
+    });
+  },
+  objectModified: function (o) {
+    this.ep.fire('object:modified', {
+      object: o.target
+    });
+  },
+  objectsRemoved: function (o) {
+    this.ep.fire('objects:removed', {
+      object: o.target
+    });
+  }
+}
+
+
+/************** 以下为暴露给实例的方法******************/
+
+/**
+ * 
+ * 实例化一个fabric canvas
+ * @returns
+ * 
+ */
+function init(o) {
+  //创建fabric canvas
+  if (!(o instanceof Object)) return console.error('初始化参数不正确')
+  let container = doc.getElementById(o.id);
+
+  if (!container) return console.error('初始化参数不正确');
+
+  this.id = o.id;
+
+  initFabric(this);
+
+  listener(this);
+
+  defineSetter(this);
+
+  for (let k in o) {
+    this.setting = o;
+  }
 }
 
 /**
@@ -273,65 +376,6 @@ function render(o) {
   }
 }
 
-let eventHandler = {
-  mousedown: function (opt) {
-    // `this` is a instance of Draw ,use apply bind runtime context
-    this.setting = {
-      startX: opt.e.clientX - draw.canvas._offset.left,
-      startY: opt.e.clientY - draw.canvas._offset.top,
-      isMouseDown: true
-    }
-    if (this.setting.type === ALL_TYPE.eraser) {
-      opt.target && opt.target.remove();
-    }
-  },
-  mouseup: function (opt) {
-    this.setting = {
-      endX: opt.e.clientX - draw.canvas._offset.left,
-      endY: opt.e.clientY - draw.canvas._offset.top,
-      isMouseDown: false
-    }
-    this.render();
-  },
-  mousemove: function (opt) {
-    if (!this.setting.isMouseDown) return;
-    let endX = opt.e.clientX - draw.canvas._offset.left;
-    let endY = opt.e.clientY - draw.canvas._offset.top;
-    //解决出界的效果
-    // 如果是圆呢？
-    // endX > this.setting.width ? endX = this.setting.width : endX = endX;
-    // endY > this.setting.height ? endY = this.setting.height : endY = endY;
-    this.setting = {
-      endX: endX,
-      endY: endY,
-      isMouseDown: true
-    }
-    this.render();
-  },
-  mouseover: function () {
-
-  },
-  mouseout: function () {
-
-  },
-  objectAdded: function (o) {
-    o.target.id = new Date().getTime() + Math.floor(Math.random() * 10);
-    console.log(o.target.id, 'Is Added');
-  },
-  objectRemoved: function (o) {
-    console.log(o.target.id, 'Is Removed');
-  },
-  objectModified: function (o) {
-    console.log(o.target.id, 'Is Modified')
-  }
-}
-
-/**
- * 清空canvas
- */
-function clear() {
-  this.canvas.clear();
-}
 
 /**
  * 撤销操作
@@ -346,19 +390,32 @@ function undo() {
 function redo() {
 
 }
+
+/**
+ * 
+ * 暴露setting接口
+ * @param {Object} o
+ *o[Object]  => 以对象的方式设置instance
+ */
+function set(o) {
+  this.setting = o;
+}
 //  配置初始化函数
-Draw.prototype.init = init;
 
-Draw.prototype.version = version;
+WhiteBoard.prototype.init = init;
 
-Draw.prototype.render = render;
+WhiteBoard.prototype.version = version;
 
-Draw.prototype.clear = clear;
+WhiteBoard.prototype.render = render;
 
-Draw.prototype.undo = undo;
+WhiteBoard.prototype.undo = undo;
 
-Draw.prototype.redo = redo;
+WhiteBoard.prototype.redo = redo;
 
-global.Draw = Draw;
+WhiteBoard.prototype.set = set;
 
-module.exports = Draw;
+WhiteBoard.prototype.ep = new ep();
+
+global.WhiteBoard = WhiteBoard;
+
+module.exports = WhiteBoard;
