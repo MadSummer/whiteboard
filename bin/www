@@ -21,6 +21,23 @@ app.set('port', port);
 
 var server = http.createServer(app);
 
+let io = require('socket.io')(server);
+io.on('connection', function (socket) {
+  io.sockets.emit('server', {
+    type: 'member',
+    data: io.engine.clientsCount
+  });
+  socket.on('disconnect', function () {
+    io.sockets.emit('server', {
+      type: 'member',
+      data: io.engine.clientsCount
+    });
+  });
+  socket.on('client', function (msg) {
+    socket.broadcast.emit('server', msg)
+  });
+});
+
 /**
  * Listen on provided port, on all network interfaces.
  */

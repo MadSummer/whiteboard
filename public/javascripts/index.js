@@ -7,25 +7,65 @@ $(document).ready(function () {
   $('#whiteboard').attr('height', height);
   wb = new WhiteBoard({
     id: 'whiteboard',
-    strokeColor: 'red'
+    stroke: 'red'
   });
-  wb.ep.on('mouse:down', function () {
-    console.log('mouse:down')
+  wb.ep.on('mousedown', function () {
+    //console.log('mouse:down')
   });
-  wb.ep.on('mouse:up', function () {
-    console.log('mouse:up')
+  wb.ep.on('mouseup', function () {
+    //console.log('mouse:up')
   });
-  wb.ep.on('mouse:move', function () {
-    console.log('mouse:move')
+  wb.ep.on('mousemove', function () {
+    //console.log('mouse:move')
   });
-  wb.ep.on('object:added', function (obj) {
-    console.log(obj)
+  wb.ep.on('objectAdded', function (obj) {
+    var target = obj.target;
+    if (target.isOutside) return;
+    var data = {
+      stroke: target.stroke,
+      fill: target.fill,
+      strokeWidth: target.strokeWidth,
+      id: target.id,
+      type: target.type
+    }
+    switch (target.type) {
+      case 'line':
+        data.x1 = target.x1;
+        data.x2 = target.x2;
+        data.y1 = target.y1;
+        data.y2 = target.y2;
+        break;
+      case 'circle':
+        data.top = target.top;
+        data.left = target.left;
+        data.radius = target.radius;
+        break;
+      case 'rect':
+        data.width = target.width;
+        data.height = target.height;
+        data.top = target.top;
+        data.left = target.left;
+        break;
+      default:
+        break;
+    }
+    sync({
+      action: 'add',
+      data: data
+    })
   });
-  wb.ep.on('object:removed', function (obj) {
-    console.log(obj)
+  wb.ep.on('objectRemoved', function (obj) {
+    sync({
+      action: 'remove',
+      data: {
+        id:obj.target.id
+      }
+    })
   });
-  wb.ep.on('objects:removed', function (obj) {
-    console.log(obj)
+  wb.ep.on('clear', function (obj) {
+    sync({
+      action: 'clear'
+    })
   });
   // 注册事件
   $('#drawController').on('click', function (e) {
@@ -40,18 +80,24 @@ $(document).ready(function () {
     }
     if (action) {
       if (action === 'clear') {
-        wb.clear()
+        wb.clear();
       }
       if (action === 'size') {
         wb.set({
           strokeWidth: parseInt($(e.target).text())
         })
       }
+      if (action === 'undo') {
+        wb.undo();
+      }
+      if (action === 'redo') {
+        wb.redo();
+      }
     }
   });
   $('#chooseColor').on('change', function () {
     wb.set({
-      strokeColor: $(this).val()
+      stroke: $(this).val()
     })
   })
   $('.size').hover(function () {
@@ -83,30 +129,23 @@ $(document).ready(function () {
   // 
   //
   // 监听
-  var socket = io.connect('http://192.168.1.38:7777');
+  var socket = io.connect('http://192.168.123.76:3000');
   socket.on('server', function (msg) {
-    switch (msg.type) {
-      case 'member':
-        $('#member').text(msg.data);
-        break;
+    switch (msg.action) {
       case 'add':
-        fabric.util.enlivenObjects([msg.obj], function (objects) {
-          objects.forEach(function (o) {
-            wb.canvas.add(o);
-          });
-        });
+        msg.data.trigger = false;  
+        wb.render(msg.data)
         break;
-      case 'eraser':
-        draw.canvas.remove(wb.canvas.item(msg.index));
+      case 'remove': 
+       wb.remove({
+         id: msg.data.id,
+         trigger:false
+       });
         break;
       case 'clear':
-        wb.clear();
-        break;
-      case 'undo':
-        wb.undo();
-        break;
-      case 'redo':
-        wb.redo();
+        wb.clear({
+          trigger:false
+        });
         break;
       default:
         break;
