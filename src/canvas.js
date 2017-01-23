@@ -12,7 +12,7 @@ const DEFAULT_CONFIG = {
   width: 500, //画布的宽
   height: 375, // 画布的高
   startX: 0, // 开始坐标，内部自动处理
-  startY: 0, 
+  startY: 0,
   endX: 0, // 截至坐标，内部自动处理
   endY: 0,
   undoMax: 10, // 撤销最大数
@@ -51,7 +51,7 @@ const All_EVT = {
 const ALL_FROM = {
   draw: 'draw', // 操作来自绘制
   undo: 'undo', // 操作来自撤销/重做
-  out:'out'     // 操作来自外界（同步等）
+  out: 'out'     // 操作来自外界（同步等）
 }
 
 /**
@@ -135,124 +135,118 @@ let eventHandler = {
 
   mousedown: function (opt) {
     // `this` is a this of WhiteBoard ,use apply bind runtime context
-
+    // 设置起点
     this.setting = {
       startX: opt.e.clientX - this.canvas._offset.left,
       startY: opt.e.clientY - this.canvas._offset.top,
       isMouseDown: true
     }
-
+    // 如果是橡皮，则删除
     if (this.setting.type === ALL_TYPE.eraser) {
       opt.target && opt.target.remove();
     }
+    // 触发mouse:down 事件
     this.ep.fire(All_EVT['mouse:down'], {
       object: opt.target
     });
   },
   mouseup: function (opt) {
-
+    //设置终点
     this.setting = {
       endX: opt.e.clientX - this.canvas._offset.left,
       endY: opt.e.clientY - this.canvas._offset.top,
       isMouseDown: false
     }
-
+    // 绘制
     _render.apply(this);
-
+    //触发 mouse:up 事件
     this.ep.fire(All_EVT['mouse:up'], {
       object: opt.target
     });
   },
   mousemove: function (opt) {
-
+    // 如果不是鼠标点下则返回
     if (!this.setting.isMouseDown) return;
-
+    // 设置终点
     let endX = opt.e.clientX - this.canvas._offset.left;
-
     let endY = opt.e.clientY - this.canvas._offset.top;
-    //解决出界的效果
-    // 如果是圆呢？
+    //解决出界的效果 暂时屏蔽
     // endX > this.setting.width ? endX = this.setting.width : endX = endX;
     // endY > this.setting.height ? endY = this.setting.height : endY = endY;
+    //设置当前参数
     this.setting = {
       endX: endX,
       endY: endY,
       isMouseDown: true
     }
-
+    // 绘制
     _render.apply(this);
-
+    // 触发 mouse:move事件
     this.ep.fire(All_EVT['mouse:move'], {
       object: opt.target
     });
   },
   mouseover: function () {
+    //触发mouse:over事件
     this.ep.fire(All_EVT['mouse:over']);
   },
   mouseout: function () {
+    // 触发mouse:out事件
     this.ep.fire('mouse:out');
   },
   pathCreated: function (o) {
-    if (!('id' in o)) {
+    // 因为object:added再mouseup之前，需要再此设置
+    /*if (!('id' in o)) {
       o.id = this.setting.generateID();
     }
+    if (!('from' in o)) {
+      o.from = ALL_FROM.draw;
+    }*/
   },
   objectAdded: function (o) {
-    if (!o.target.id) {
+    // 因为freeDrawing的object:added再mouseup之前，需要再此设置
+    if (!('id' in o.target)) {
       o.target.id = this.setting.generateID();
     }
-    _pushUndo.apply(this, [{
-      action: All_EVT['object:added'],
-      target: o.target
-    }]);
-
-    if (this.setting.trigger) {
-      this.ep.fire(All_EVT['object:added'], {
-        target: o.target
-      });
-    } else {
-      this.setting = {
-        trigger: true
-      }
+    if (!('from' in o.target)) {
+      o.target.from = ALL_FROM.draw;
     }
-
+    // 对象的from属性表示了来自那个操作，某些操作可能不需要触发回调
+    if (o.target.from !== ALL_FROM.undo) {
+      _pushUndo.apply(this, [{
+        action: All_EVT['object:added'],
+        target: o.target
+      }]);
+    }
+    // 触发回调 回调根据from属性判断来源
+    this.ep.fire(All_EVT['object:added'], {
+      target: o.target
+    });
   },
   objectRemoved: function (o) {
-    _pushUndo.apply(this, [{
-      action: All_EVT['object:removed'],
-      target: o.target
-    }]);
-
-    if (this.setting.trigger) {
-      this.ep.fire(All_EVT['object:removed'], {
+    // 对象的from属性表示了来自那个操作，某些操作可能不需要触发回调
+    if (o.target.from !== ALL_FROM.undo) {
+      _pushUndo.apply(this, [{
+        action: All_EVT['object:removed'],
         target: o.target
-      });
-    } else {
-      this.setting = {
-        trigger: true
-      };
+      }]);
     }
-
+    this.ep.fire(All_EVT['object:removed'], {
+      target: o.target
+    });
   },
   objectModified: function (o) {
-    if (this.setting.trigger) {
-      this.ep.fire(All_EVT['object:modified'], {
-        target: o.target
-      });
-    } else {
-      this.setting = {
-        trigger: true
-      };
-    }
+    // 触发回调
+    this.ep.fire(All_EVT['object:modified'], {
+      target: o.target
+    });
+
   },
   clear: function (o) {
-    if (!this.setting.trigger) return;
+    // 触发回调
     this.ep.fire(All_EVT['clear'], {
       target: o.target
     });
-    this.setting = {
-      trigger: true
-    };
   }
 }
 /**
@@ -289,7 +283,7 @@ function _initFabric() {
 
   this.ctx = this.canvas.upperCanvasEl.getContext('2d');
 
-  
+
 
   // 增加原型方法 getItemById
 
@@ -318,12 +312,12 @@ function _initFabric() {
   //增加原型方法 removeAllObjects
 
   /**
-   * @param {any} removeBg
+   * @param {Boolean} removeBg
    * 是否删除背景图 默认为false
    */
   fabric.Canvas.prototype.removeAllObjects = function (removeBg) {
 
-    let objects = this.getObjects();
+    let objects = this.getObjects().slice();
 
     try {
       this.fire(All_EVT['clear'], {
@@ -397,7 +391,6 @@ function _createObject(o) {
       break;
   }
 }
-/************** 以下为暴露给实例的方法******************/
 
 /**
  * 
@@ -414,12 +407,16 @@ function _init(o) {
 
   this.id = o.id;
 
+  // 初始化fabrci
   _initFabric.apply(this);
 
+  // 注册事件监听器  
   _registerEventListener.apply(this);
 
+  // 设置setting的getter和setter  
   _defineSetter.apply(this);
 
+  // 将初始化参数赋值给setting  
   for (let k in o) {
     this.setting = o;
   }
@@ -478,11 +475,15 @@ function _render() {
 
   // mouseup _render at lowerCanvasEl with obj
   else {
+    // 鼠标up，清空上层
     this.ctx.clearRect(0, 0, setting.width, setting.height);
+    // 创建一个空对象
     let object = null;
+    //如果是path，对象直接生成，返回这个path
     if (type === ALL_TYPE.path) {
       return this.canvas.getLastItem();
     }
+    // 定义绘制对象的通用属性
     let o = {
       type: type,
       stroke: stroke,
@@ -490,7 +491,9 @@ function _render() {
       strokeLineCap: 'round',
       strokeWidth: strokeWidth,
       fillColor: fillColor,
+      id:this.setting.generateID()
     }
+    // 根据type不同(line || circle  || arc)给o增加属性
     switch (type) {
       case ALL_TYPE.line:
         o.x1 = startX - strokeWidth / 2;
@@ -515,12 +518,12 @@ function _render() {
       default:
         break;
     }
-
+    //绘制对象，将对象返回
     object = _createObject(o);
-    
+
     //表明对象来源
     object.from = ALL_FROM.draw;
-
+    // 添加到fabric canvas中
     this.canvas.add(object);
 
     return object;
@@ -530,26 +533,6 @@ function _render() {
 }
 
 /**
- * 
- * 暴露绘制接口
- * @param {Object} o
- *绘制object所需要的参数
- */
-function render(opt) {
-  this.setting.trigger = opt.trigger === undefined ? true : opt.trigger;
-  delete opt.trigger;
-  let object = _createObject(opt);
-
-  // 表明对象来源为外界（非绘制，非undo）
-  
-  if (object) {
-    object.from = ALL_FROM.out;
-    this.canvas.add(object);
-  }
-}
-
-/**
- * 
  * 需要的时候向撤销操作中追加动作
  * @param {Obejct} o
  * undo对象
@@ -560,13 +543,40 @@ function _pushUndo(o) {
   }
   this.undoList.push(o);
 }
+/************** 以下为暴露给实例的方法******************/
+
+
+
+/**
+ * 
+ * 暴露绘制接口
+ * @param {Object} o
+ *绘制object所需要的参数
+ */
+function render(opt) {
+
+  let object = _createObject(opt);
+
+  // 表明对象来源为外界（非绘制，非undo）
+
+  if (object) {
+    object.from = ALL_FROM.out;
+    this.canvas.add(object);
+  }
+}
+
+
 /**
  * 撤销操作
  */
 function undo() {
+  //撤销list为0 返回
   if (this.undoList.length === 0) return;
+  //得到当前撤销操作的对象
   let undo = this.undoList[this.undoList.length - 1];
+  //如果惭怍没有target 返回，同时pop
   if (!undo.target) return this.undoList.pop();
+  //更改对象来源
   undo.target.from = ALL_FROM.undo;
   switch (undo.action) {
     case All_EVT['object:added']:
@@ -576,7 +586,7 @@ function undo() {
       this.canvas.add(undo.target);
       break;
     case All_EVT['clear']:
-      this.canvas.add.apply(this.canvas, (undo.target));
+      this.canvas.add.apply(this.canvas, [undo.target]);
       break;
     default:
       break;
@@ -634,7 +644,6 @@ function clear(opt) {
     removeBg: opt.removeBg
   }]);
   this.canvas.removeAllObjects(opt.removeBg);
-  this.setting.trigger = opt.trigger === undefined ? true : opt.trigger;
 }
 
 /**
@@ -647,7 +656,7 @@ function clear(opt) {
 function remove(opt) {
   let object = this.canvas.getItemById(opt.id);
   if (object) {
-    this._setting.trigger = opt.trigger === undefined ? true : opt.trigger;
+    object.from = ALL_FROM.out;
     object.remove();
   }
 }

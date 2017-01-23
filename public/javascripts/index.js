@@ -1,5 +1,5 @@
 //draw.init('canvas', 'whiteboard');
-var draw
+var draw;
 $(document).ready(function () {
   var width = parseInt($('#whiteboard').css('width'));
   var height = parseInt($('#whiteboard').css('height')) || 600;
@@ -23,13 +23,14 @@ $(document).ready(function () {
   });
   wb.ep.on('objectAdded', function (obj) {
     var target = obj.target;
-    if (target.isOutside) return;
+    if (target.from == 'out') return;
     var data = {
       stroke: target.stroke,
       fill: target.fill,
       strokeWidth: target.strokeWidth,
       id: target.id,
-      type: target.type
+      type: target.type,
+      from:target.from
     }
     switch (target.type) {
       case 'line':
@@ -137,8 +138,8 @@ $(document).ready(function () {
   })
   // 
   //
-  // 监听
-  var socket = io.connect('http://192.168.1.38:3000');
+  // 监听 
+  var socket = io.connect('http://192.168.123.76:3000');
   socket.on('server', function (msg) {
     switch (msg.action) {
       case 'add':
@@ -148,13 +149,10 @@ $(document).ready(function () {
       case 'remove':
         wb.remove({
           id: msg.data.id,
-          trigger: false
         });
         break;
       case 'clear':
-        wb.clear({
-          trigger: false
-        });
+        wb.clear();
         break;
       default:
         break;
