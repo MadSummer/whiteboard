@@ -50,7 +50,8 @@ const All_EVT = {
 }
 const ALL_FROM = {
   draw: 'draw',
-  auto: 'auto'
+  undo: 'undo',
+  out:'out'
 }
 
 /**
@@ -517,6 +518,9 @@ function _render() {
 
     object = _createObject(o);
     
+    //表明对象来源
+    object.from = ALL_FROM.draw;
+
     this.canvas.add(object);
 
     return object;
@@ -535,7 +539,11 @@ function render(opt) {
   this.setting.trigger = opt.trigger === undefined ? true : opt.trigger;
   delete opt.trigger;
   let object = _createObject(opt);
+
+  // 表明对象来源为外界（非绘制，非undo）
+  
   if (object) {
+    object.from = ALL_FROM.out;
     this.canvas.add(object);
   }
 }
@@ -559,6 +567,7 @@ function undo() {
   if (this.undoList.length === 0) return;
   let undo = this.undoList[this.undoList.length - 1];
   if (!undo.target) return this.undoList.pop();
+  undo.target.from = ALL_FROM.undo;
   switch (undo.action) {
     case All_EVT['object:added']:
       undo.target.remove();
@@ -581,6 +590,7 @@ function undo() {
 function redo() {
   if (this.redoList.length === 0) return;
   let redo = this.redoList[this.redoList.length - 1];
+  undo.target.from = ALL_FROM.undo;
   switch (redo.action) {
     case All_EVT['object:added']:
       this.canvas.add(redo.target);
