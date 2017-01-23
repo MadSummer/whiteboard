@@ -1,8 +1,13 @@
+/*@const require*/
 const version = require('./version');
 const cursor = require('./cursor');
 const ep = require('./eventproxy');
+
+/*@const global var*/
 const global = window;
 const doc = document;
+
+/*@const default var*/
 const DEFAULT_CONFIG = {
   width: 500,
   height: 375,
@@ -11,17 +16,20 @@ const DEFAULT_CONFIG = {
   endX: 0,
   endY: 0,
   undoMax: 10,
-  type: 'pencil',
+  type: 'path',
   fontSize: 16,
   strokeWidth: 2,
   stroke: '#222',
   fillColor: '',
   isMouseDown: false,
   action: null,
-  trigger: true
+  trigger: true,
+  generateID: function () {
+    return new Date().getTime() + Math.floor(Math.random() * 100);
+  }
 }
 const ALL_TYPE = {
-  'pencil': 'pencil',
+  'path': 'path',
   'circle': 'circle',
   'rect': 'rect',
   'line': 'line',
@@ -37,6 +45,7 @@ const All_EVT = {
   'object:added': 'objectAdded',
   'object:modified': 'objectModified',
   'object:removed': 'objectRemoved',
+  'path:created': 'pathCreated',
   'clear': 'clear'
 }
 const ALL_FROM = {
@@ -84,7 +93,7 @@ function _defineSetter() {
 
             this.canvas.selectable = false;
 
-            if (v === ALL_TYPE.pencil) {
+            if (v === ALL_TYPE.path) {
               this.canvas.isDrawingMode = true;
             }
 
@@ -100,6 +109,13 @@ function _defineSetter() {
               this._setting.strokeWidth = 2
             }
 
+            break;
+          case 'generateID':
+            if (typeof v !== 'function') {
+              this._setting.generateID = function () {
+                return new Date().getTime() + Math.floor(Math.random() * 100);
+              }
+            }
             break;
           default:
             break;
@@ -127,10 +143,6 @@ let eventHandler = {
 
     if (this.setting.type === ALL_TYPE.eraser) {
       opt.target && opt.target.remove();
-      _pushUndo.apply(this, [{
-        action: All_EVT['object:removed'],
-        target: opt.target
-      }])
     }
     this.ep.fire(All_EVT['mouse:down'], {
       object: opt.target
@@ -144,10 +156,8 @@ let eventHandler = {
       isMouseDown: false
     }
 
-    _pushUndo.apply(this, [{
-      action: All_EVT['object:added'],
-      target: _render.apply(this)
-    }])
+    _render.apply(this);
+
     this.ep.fire(All_EVT['mouse:up'], {
       object: opt.target
     });
@@ -168,7 +178,9 @@ let eventHandler = {
       endY: endY,
       isMouseDown: true
     }
+
     _render.apply(this);
+
     this.ep.fire(All_EVT['mouse:move'], {
       object: opt.target
     });
@@ -179,16 +191,25 @@ let eventHandler = {
   mouseout: function () {
     this.ep.fire('mouse:out');
   },
+  pathCreated: function (o) {
+    if (!('id' in o)) {
+      o.id = this.setting.generateID();
+    }
+  },
   objectAdded: function (o) {
-    /*if (!('id' in o.target)) {
-      o.target.id = new Date().getTime() + Math.floor(Math.random() * 10);
-    }*/
+    if (!o.target.id) {
+      o.target.id = this.setting.generateID();
+    }
+    _pushUndo.apply(this, [{
+      action: All_EVT['object:added'],
+      target: o.target
+    }]);
+
     if (this.setting.trigger) {
       this.ep.fire(All_EVT['object:added'], {
         target: o.target
       });
-    }
-    else {
+    } else {
       this.setting = {
         trigger: true
       }
@@ -196,12 +217,16 @@ let eventHandler = {
 
   },
   objectRemoved: function (o) {
+    _pushUndo.apply(this, [{
+      action: All_EVT['object:removed'],
+      target: o.target
+    }]);
+
     if (this.setting.trigger) {
       this.ep.fire(All_EVT['object:removed'], {
         target: o.target
       });
-    }
-    else {
+    } else {
       this.setting = {
         trigger: true
       };
@@ -213,8 +238,7 @@ let eventHandler = {
       this.ep.fire(All_EVT['object:modified'], {
         target: o.target
       });
-    }
-    else {
+    } else {
       this.setting = {
         trigger: true
       };
@@ -264,6 +288,8 @@ function _initFabric() {
 
   this.ctx = this.canvas.upperCanvasEl.getContext('2d');
 
+  
+
   // 增加原型方法 getItemById
 
   fabric.Canvas.prototype.getItemById = function (id) {
@@ -291,8 +317,6 @@ function _initFabric() {
   //增加原型方法 removeAllObjects
 
   /**
-   * 
-   * 
    * @param {any} removeBg
    * 是否删除背景图 默认为false
    */
@@ -302,7 +326,8 @@ function _initFabric() {
 
     try {
       this.fire(All_EVT['clear'], {
-        target: objects
+        target: objects,
+        removeBg: removeBg
       });
     } catch (error) {
 
@@ -333,7 +358,7 @@ function _createObject(o) {
         strokeWidth: o.strokeWidth,
         radius: 90,
         strokeLineCap: 'round',
-        id: o.id ? o.id : new Date().getTime() + Math.floor(Math.random() * 10)
+        id: o.id
       })
       break;
     case ALL_TYPE.circle:
@@ -344,7 +369,7 @@ function _createObject(o) {
         stroke: o.stroke,
         strokeWidth: o.strokeWidth,
         fill: o.fillColor,
-        id: o.id ? o.id : new Date().getTime() + Math.floor(Math.random() * 10)
+        id: o.id
       })
       break;
     case ALL_TYPE.rect:
@@ -357,9 +382,16 @@ function _createObject(o) {
         strokeLineJoin: 'round',
         strokeWidth: o.strokeWidth,
         fill: o.fillColor,
-        id: o.id ? o.id : new Date().getTime() + Math.floor(Math.random() * 10)
+        id: o.id
       })
       break;
+    case ALL_TYPE.path:
+      return new fabric.Path(o.path, {
+        stroke: o.stroke,
+        strokeWidth: o.strokeWidth,
+        fill: o.fill,
+        id: o.id
+      })
     default:
       break;
   }
@@ -413,7 +445,7 @@ function _render() {
   let isMouseDown = this.setting.isMouseDown;
   // mousemove _render at upperCanvasEl with temp 
   if (isMouseDown) {
-    if (ALL_TYPE.pencil === type) return;
+    if (ALL_TYPE.path === type) return;
     this.ctx.clearRect(0, 0, setting.width, setting.height);
     let ctx = this.ctx;
     ctx.strokeStyle = stroke;
@@ -446,9 +478,8 @@ function _render() {
   // mouseup _render at lowerCanvasEl with obj
   else {
     this.ctx.clearRect(0, 0, setting.width, setting.height);
-    let object;
-    if (type === ALL_TYPE.pencil) {
-      this.canvas.getLastItem().id = new Date().getTime() + Math.floor(Math.random() * 10);
+    let object = null;
+    if (type === ALL_TYPE.path) {
       return this.canvas.getLastItem();
     }
     let o = {
@@ -458,7 +489,6 @@ function _render() {
       strokeLineCap: 'round',
       strokeWidth: strokeWidth,
       fillColor: fillColor,
-      id: new Date().getTime() + Math.floor(Math.random() * 10)
     }
     switch (type) {
       case ALL_TYPE.line:
@@ -484,7 +514,9 @@ function _render() {
       default:
         break;
     }
+
     object = _createObject(o);
+    
     this.canvas.add(object);
 
     return object;
@@ -562,14 +594,14 @@ function redo() {
     default:
       break;
   }
-  _pushUndo.apply(this, [this.redoList.pop()])
+  _pushUndo.apply(this, [this.redoList.pop()]);
 }
 
 /**
  * @private
  * 暴露setting接口
  * @param {Object} o
- *o[Object]  => 以对象的方式设置instance
+ * o[Object]  => 以对象的方式设置instance
  */
 function set(o) {
   this.setting = o;

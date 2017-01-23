@@ -7,7 +7,10 @@ $(document).ready(function () {
   $('#whiteboard').attr('height', height);
   wb = new WhiteBoard({
     id: 'whiteboard',
-    stroke: 'red'
+    stroke: 'red',
+    generateID: function () {
+      return (Math.random() * 100000);
+    }
   });
   wb.ep.on('mousedown', function () {
     //console.log('mouse:down')
@@ -46,6 +49,12 @@ $(document).ready(function () {
         data.top = target.top;
         data.left = target.left;
         break;
+      case 'path':
+        data.path = target.path.join(' ').replace(/,/g, ' ');
+        data.height = target.height;
+        data.top = target.top;
+        data.left = target.left;
+        break;
       default:
         break;
     }
@@ -58,7 +67,7 @@ $(document).ready(function () {
     sync({
       action: 'remove',
       data: {
-        id:obj.target.id
+        id: obj.target.id
       }
     })
   });
@@ -129,22 +138,22 @@ $(document).ready(function () {
   // 
   //
   // 监听
-  var socket = io.connect('http://192.168.123.76:3000');
+  var socket = io.connect('http://192.168.1.38:3000');
   socket.on('server', function (msg) {
     switch (msg.action) {
       case 'add':
-        msg.data.trigger = false;  
+        msg.data.trigger = false;
         wb.render(msg.data)
         break;
-      case 'remove': 
-       wb.remove({
-         id: msg.data.id,
-         trigger:false
-       });
+      case 'remove':
+        wb.remove({
+          id: msg.data.id,
+          trigger: false
+        });
         break;
       case 'clear':
         wb.clear({
-          trigger:false
+          trigger: false
         });
         break;
       default:

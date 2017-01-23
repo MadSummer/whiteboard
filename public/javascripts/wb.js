@@ -50,11 +50,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 /* 0 */
 /***/function (module, exports, __webpack_require__) {
 
+	/*@const require*/
 	var version = __webpack_require__(1);
 	var cursor = __webpack_require__(2);
 	var ep = __webpack_require__(3);
+
+	/*@const global var*/
 	var global = window;
 	var doc = document;
+
+	/*@const default var*/
 	var DEFAULT_CONFIG = {
 		width: 500,
 		height: 375,
@@ -63,17 +68,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		endX: 0,
 		endY: 0,
 		undoMax: 10,
-		type: 'pencil',
+		type: 'path',
 		fontSize: 16,
 		strokeWidth: 2,
 		stroke: '#222',
 		fillColor: '',
 		isMouseDown: false,
 		action: null,
-		trigger: true
+		trigger: true,
+		generateID: function generateID() {
+			return new Date().getTime() + Math.floor(Math.random() * 100);
+		}
 	};
 	var ALL_TYPE = {
-		'pencil': 'pencil',
+		'path': 'path',
 		'circle': 'circle',
 		'rect': 'rect',
 		'line': 'line',
@@ -89,6 +97,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		'object:added': 'objectAdded',
 		'object:modified': 'objectModified',
 		'object:removed': 'objectRemoved',
+		'path:created': 'pathCreated',
 		'clear': 'clear'
 	};
 	var ALL_FROM = {
@@ -136,7 +145,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 							this.canvas.selectable = false;
 
-							if (v === ALL_TYPE.pencil) {
+							if (v === ALL_TYPE.path) {
 								this.canvas.isDrawingMode = true;
 							}
 
@@ -152,6 +161,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 								this._setting.strokeWidth = 2;
 							}
 
+							break;
+						case 'generateID':
+							if (typeof v !== 'function') {
+								this._setting.generateID = function () {
+									return new Date().getTime() + Math.floor(Math.random() * 100);
+								};
+							}
 							break;
 						default:
 							break;
@@ -178,10 +194,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 			if (this.setting.type === ALL_TYPE.eraser) {
 				opt.target && opt.target.remove();
-				_pushUndo.apply(this, [{
-					action: All_EVT['object:removed'],
-					target: opt.target
-				}]);
 			}
 			this.ep.fire(All_EVT['mouse:down'], {
 				object: opt.target
@@ -195,10 +207,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				isMouseDown: false
 			};
 
-			_pushUndo.apply(this, [{
-				action: All_EVT['object:added'],
-				target: _render.apply(this)
-			}]);
+			_render.apply(this);
+
 			this.ep.fire(All_EVT['mouse:up'], {
 				object: opt.target
 			});
@@ -219,7 +229,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				endY: endY,
 				isMouseDown: true
 			};
+
 			_render.apply(this);
+
 			this.ep.fire(All_EVT['mouse:move'], {
 				object: opt.target
 			});
@@ -230,10 +242,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		mouseout: function mouseout() {
 			this.ep.fire('mouse:out');
 		},
+		pathCreated: function pathCreated(o) {
+			if (!('id' in o)) {
+				o.id = this.setting.generateID();
+			}
+		},
 		objectAdded: function objectAdded(o) {
-			/*if (!('id' in o.target)) {
-     o.target.id = new Date().getTime() + Math.floor(Math.random() * 10);
-   }*/
+			if (!o.target.id) {
+				o.target.id = this.setting.generateID();
+			}
+			_pushUndo.apply(this, [{
+				action: All_EVT['object:added'],
+				target: o.target
+			}]);
+
 			if (this.setting.trigger) {
 				this.ep.fire(All_EVT['object:added'], {
 					target: o.target
@@ -245,6 +267,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			}
 		},
 		objectRemoved: function objectRemoved(o) {
+			_pushUndo.apply(this, [{
+				action: All_EVT['object:removed'],
+				target: o.target
+			}]);
+
 			if (this.setting.trigger) {
 				this.ep.fire(All_EVT['object:removed'], {
 					target: o.target
@@ -341,8 +368,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		//增加原型方法 removeAllObjects
 
 		/**
-   * 
-   * 
    * @param {any} removeBg
    * 是否删除背景图 默认为false
    */
@@ -352,7 +377,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 			try {
 				this.fire(All_EVT['clear'], {
-					target: objects
+					target: objects,
+					removeBg: removeBg
 				});
 			} catch (error) {}
 
@@ -380,7 +406,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					strokeWidth: o.strokeWidth,
 					radius: 90,
 					strokeLineCap: 'round',
-					id: o.id ? o.id : new Date().getTime() + Math.floor(Math.random() * 10)
+					id: o.id
 				});
 				break;
 			case ALL_TYPE.circle:
@@ -391,7 +417,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					stroke: o.stroke,
 					strokeWidth: o.strokeWidth,
 					fill: o.fillColor,
-					id: o.id ? o.id : new Date().getTime() + Math.floor(Math.random() * 10)
+					id: o.id
 				});
 				break;
 			case ALL_TYPE.rect:
@@ -404,9 +430,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					strokeLineJoin: 'round',
 					strokeWidth: o.strokeWidth,
 					fill: o.fillColor,
-					id: o.id ? o.id : new Date().getTime() + Math.floor(Math.random() * 10)
+					id: o.id
 				});
 				break;
+			case ALL_TYPE.path:
+				return new fabric.Path(o.path, {
+					stroke: o.stroke,
+					strokeWidth: o.strokeWidth,
+					fill: o.fill,
+					id: o.id
+				});
 			default:
 				break;
 		}
@@ -460,7 +493,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		var isMouseDown = this.setting.isMouseDown;
 		// mousemove _render at upperCanvasEl with temp 
 		if (isMouseDown) {
-			if (ALL_TYPE.pencil === type) return;
+			if (ALL_TYPE.path === type) return;
 			this.ctx.clearRect(0, 0, setting.width, setting.height);
 			var ctx = this.ctx;
 			ctx.strokeStyle = stroke;
@@ -495,9 +528,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				var _o;
 
 				this.ctx.clearRect(0, 0, setting.width, setting.height);
-				var object = void 0;
-				if (type === ALL_TYPE.pencil) {
-					this.canvas.getLastItem().id = new Date().getTime() + Math.floor(Math.random() * 10);
+				var object = null;
+				if (type === ALL_TYPE.path) {
 					return this.canvas.getLastItem();
 				}
 				var o = (_o = {
@@ -505,7 +537,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					stroke: stroke,
 					strokeWidth: strokeWidth,
 					strokeLineCap: 'round'
-				}, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _defineProperty(_o, 'id', new Date().getTime() + Math.floor(Math.random() * 10)), _o);
+				}, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _o);
 				switch (type) {
 					case ALL_TYPE.line:
 						o.x1 = startX - strokeWidth / 2;
@@ -530,7 +562,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					default:
 						break;
 				}
+
 				object = _createObject(o);
+
 				this.canvas.add(object);
 
 				return object;
@@ -613,7 +647,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   * @private
   * 暴露setting接口
   * @param {Object} o
-  *o[Object]  => 以对象的方式设置instance
+  * o[Object]  => 以对象的方式设置instance
   */
 	function set(o) {
 		this.setting = o;
