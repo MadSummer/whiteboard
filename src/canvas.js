@@ -9,22 +9,22 @@ const doc = document;
 
 /*@const default var*/
 const DEFAULT_CONFIG = {
-  width: 500,
-  height: 375,
-  startX: 0,
-  startY: 0,
-  endX: 0,
+  width: 500, //画布的宽
+  height: 375, // 画布的高
+  startX: 0, // 开始坐标，内部自动处理
+  startY: 0, 
+  endX: 0, // 截至坐标，内部自动处理
   endY: 0,
-  undoMax: 10,
-  type: 'path',
-  fontSize: 16,
-  strokeWidth: 2,
-  stroke: '#222',
-  fillColor: '',
-  isMouseDown: false,
-  action: null,
-  trigger: true,
-  generateID: function () {
+  undoMax: 10, // 撤销最大数
+  type: 'path', //默认配置
+  fontSize: 16,  //字号
+  strokeWidth: 2, //线宽，最小为2
+  stroke: '#222', // 线条颜色
+  fillColor: '', // 填充颜色
+  isMouseDown: false, //鼠标是否按下的标识
+  action: null, // 暂定
+  trigger: true, // 是否触发事件  废除
+  generateID: function () { // 生成对象id的函数
     return new Date().getTime() + Math.floor(Math.random() * 100);
   }
 }
@@ -49,9 +49,9 @@ const All_EVT = {
   'clear': 'clear'
 }
 const ALL_FROM = {
-  draw: 'draw',
-  undo: 'undo',
-  out:'out'
+  draw: 'draw', // 操作来自绘制
+  undo: 'undo', // 操作来自撤销/重做
+  out:'out'     // 操作来自外界（同步等）
 }
 
 /**
