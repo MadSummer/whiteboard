@@ -102,13 +102,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		'clear': 'clear'
 	};
 	var ALL_FROM = {
-		draw: 'draw', // 操作来自绘制
-		undo: 'undo', // 操作来自撤销/重做
-		out: 'out' // 操作来自外界（同步等）
+		draw: 'draw', // 操作来自_render
+		undo: 'undo', // 操作来自undo,redo
+		out: 'out' // 操作来自render
 	};
 
 	/**
-  * @private
+  * @private 
   * 给实例的setting设置一个setter方法
   */
 	function _defineSetter() {
@@ -264,7 +264,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				o.target.from = ALL_FROM.draw;
 			}
 			// 对象的from属性表示了来自那个操作，某些操作可能不需要触发回调
-			if (o.target.from !== ALL_FROM.undo) {
+			if (o.target.from === ALL_FROM.draw) {
 				_pushUndo.apply(this, [{
 					action: All_EVT['object:added'],
 					target: o.target
@@ -277,7 +277,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		},
 		objectRemoved: function objectRemoved(o) {
 			// 对象的from属性表示了来自那个操作，某些操作可能不需要触发回调
-			if (o.target.from !== ALL_FROM.undo) {
+			if (o.target.from === ALL_FROM.draw) {
 				_pushUndo.apply(this, [{
 					action: All_EVT['object:removed'],
 					target: o.target
@@ -695,7 +695,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   * 暴露删除接口
   * @param {Object} opt
   * opt.id 删除对象的id
-  * opt.trigger 是否触发事件
   */
 	function remove(opt) {
 		var object = this.canvas.getItemById(opt.id);

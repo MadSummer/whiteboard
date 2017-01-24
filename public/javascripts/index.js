@@ -139,7 +139,7 @@ $(document).ready(function () {
   // 
   //
   // 监听 
-  var socket = io.connect('http://192.168.123.76:3000');
+  var socket = io.connect('http://192.168.1.38:3000');
   socket.on('server', function (msg) {
     switch (msg.action) {
       case 'add':

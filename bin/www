@@ -21,12 +21,15 @@ app.set('port', port);
 
 var server = http.createServer(app);
 
+var allObject = [];
+
 let io = require('socket.io')(server);
 io.on('connection', function (socket) {
   io.sockets.emit('server', {
     type: 'member',
     data: io.engine.clientsCount
   });
+  socket.emit('history', allObject)
   socket.on('disconnect', function () {
     io.sockets.emit('server', {
       type: 'member',
@@ -34,6 +37,16 @@ io.on('connection', function (socket) {
     });
   });
   socket.on('client', function (msg) {
+    switch (msg.action) {
+      case 'add':
+        allObject[msg.data.id.toString()] = msg.data;
+        break;
+      case 'remove':
+        delete allObject[msg.data.id.toString()];
+        break;
+      default:
+        break;
+    }
     socket.broadcast.emit('server', msg)
   });
 });
