@@ -10,8 +10,10 @@ $(document).ready(function () {
     stroke: 'red',
     generateID: function () {
       return (Math.random() * 100000);
-    }
+    },
+    wrap:''
   });
+  wb.loadBackgroundImage('http://192.168.1.107/mantis/images/mantis_logo.png');
   wb.ep.on('mousedown', function () {
     //console.log('mouse:down')
   });
@@ -30,7 +32,7 @@ $(document).ready(function () {
       strokeWidth: target.strokeWidth,
       id: target.id,
       type: target.type,
-      from:target.from
+      from: target.from
     }
     switch (target.type) {
       case 'line':
@@ -73,8 +75,9 @@ $(document).ready(function () {
     })
   });
   wb.ep.on('clear', function (obj) {
+    if (obj.from == 'out') return;
     sync({
-      action: 'clear'
+      action:'clear'
     })
   });
   // 注册事件
@@ -90,7 +93,10 @@ $(document).ready(function () {
     }
     if (action) {
       if (action === 'clear') {
-        wb.clear();
+        wb.clear({
+          from:'draw',
+          removeBg: false
+        });
       }
       if (action === 'size') {
         wb.set({
@@ -143,7 +149,6 @@ $(document).ready(function () {
   socket.on('server', function (msg) {
     switch (msg.action) {
       case 'add':
-        msg.data.trigger = false;
         wb.render(msg.data)
         break;
       case 'remove':
@@ -152,13 +157,20 @@ $(document).ready(function () {
         });
         break;
       case 'clear':
-        wb.clear();
+        wb.clear({
+          removeBg: false,
+          from:'out'
+        });
         break;
       default:
         break;
     }
   })
-
+  socket.on('history', function (msg) {
+    for (var k in msg) {
+       wb.render(msg[k])
+    }
+  })
   function sync(opt) {
     socket.emit('client', opt)
   }

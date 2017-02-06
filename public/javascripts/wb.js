@@ -63,6 +63,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 	var DEFAULT_CONFIG = {
 		width: 500, //画布的宽
 		height: 375, // 画布的高
+		ratio: 1, // 缩放比
 		startX: 0, // 开始坐标，内部自动处理
 		startY: 0,
 		endX: 0, // 截至坐标，内部自动处理
@@ -79,7 +80,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		generateID: function generateID() {
 			// 生成对象id的函数
 			return new Date().getTime() + Math.floor(Math.random() * 100);
-		}
+		},
+		wrap: null // 当canvas过大导致滚动时，对鼠标的定位需要加上scrollTop和scrollLeft。必须设置，否则溢出时鼠标位置计算出错
 	};
 	var ALL_TYPE = {
 		'path': 'path',
@@ -98,6 +100,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		'object:added': 'objectAdded',
 		'object:modified': 'objectModified',
 		'object:removed': 'objectRemoved',
+		'allObjects:removed': 'allObjectsRemoved',
 		'path:created': 'pathCreated',
 		'clear': 'clear'
 	};
@@ -164,6 +167,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 							}
 
 							break;
+						case 'ratio':
+							var width = this.setting.width;
+							var height = this.setting.height;
+							var backgroundImage = this.canvas.backgroundImage;
+
+							this.canvas.setWidth(width * v);
+							this.canvas.setHeight(height * v);
+
+							this.canvas.setZoom(v);
+							break;
 						case 'generateID':
 							if (typeof v !== 'function') {
 								this._setting.generateID = function () {
@@ -188,9 +201,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		mousedown: function mousedown(opt) {
 			// `this` is a this of WhiteBoard ,use apply bind runtime context
 			// 设置起点
+			var scrollTop = this.canvas.upperCanvasEl.scrollTop;
+			var scrollLeft = this.canvas.upperCanvasEl.scrollLeft;
 			this.setting = {
-				startX: opt.e.clientX - this.canvas._offset.left,
-				startY: opt.e.clientY - this.canvas._offset.top,
+				startX: opt.e.clientX - this.canvas._offset.left + scrollLeft,
+				startY: opt.e.clientY - this.canvas._offset.top + scrollTop,
 				isMouseDown: true
 			};
 			// 如果是橡皮，则删除
@@ -293,11 +308,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				target: o.target
 			});
 		},
-		clear: function clear(o) {
+		allObjectsRemoved: function allObjectsRemoved(o) {
 			// 触发回调
-			this.ep.fire(All_EVT['clear'], {
-				target: o.target
-			});
+			this.ep.fire(All_EVT['clear'], o);
 		}
 	};
 	/**
@@ -368,22 +381,19 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
    * @param {Boolean} removeBg
    * 是否删除背景图 默认为false
    */
-		fabric.Canvas.prototype.removeAllObjects = function (removeBg) {
+		fabric.Canvas.prototype.removeAllObjects = function (obj) {
 
 			var objects = this.getObjects().slice();
 
 			try {
-				this.fire(All_EVT['clear'], {
-					target: objects,
-					removeBg: removeBg
-				});
+				this.fire('allObjects:removed', obj);
 			} catch (error) {}
 
 			var backgroundImage = this.backgroundImage;
 
 			this.clear();
 
-			if (!removeBg && backgroundImage) {
+			if (!obj.removeBg && backgroundImage) {
 				this.setBackgroundImage(backgroundImage, this.renderAll.bind(this));
 			}
 		};
@@ -494,11 +504,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		// mousemove _render at upperCanvasEl with temp 
 		if (isMouseDown) {
 			if (ALL_TYPE.path === type) return;
-			this.ctx.clearRect(0, 0, setting.width, setting.height);
+			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 			var ctx = this.ctx;
 			ctx.strokeStyle = stroke;
 			//原生api
-			ctx.lineWidth = strokeWidth;
+			ctx.lineWidth = strokeWidth * setting.ratio;
 			ctx.lineCap = 'round';
 			ctx.lineJoin = 'round';
 			ctx.beginPath();
@@ -528,13 +538,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				var _o;
 
 				// 鼠标up，清空上层
-				this.ctx.clearRect(0, 0, setting.width, setting.height);
+				this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 				// 创建一个空对象
 				var object = null;
 				//如果是path，对象直接生成，返回这个path
 				if (type === ALL_TYPE.path) {
 					return this.canvas.getLastItem();
 				}
+				// 根据缩放比计算坐标点
+				var ratio = setting.ratio;
+				startX = startX / ratio;
+				startY = startY / ratio;
+				endX = endX / ratio;
+				endY = endY / ratio;
+
 				// 定义绘制对象的通用属性
 				var o = (_o = {
 					type: type,
@@ -543,6 +560,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					strokeLineCap: 'round'
 				}, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _defineProperty(_o, 'id', this.setting.generateID()), _o);
 				// 根据type不同(line || circle  || arc)给o增加属性
+
 				switch (type) {
 					case ALL_TYPE.line:
 						o.x1 = startX - strokeWidth / 2;
@@ -652,8 +670,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			case All_EVT['object:removed']:
 				redo.target.remove();
 				break;
-			case All_EVT['clear']:
-				this.canvas.removeAllObjects(redo.removeBg);
 				break;
 			default:
 				break;
@@ -674,20 +690,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 	/**
   * 
   * 暴露clear接口
-  * @param {Object} opt
+  * @param {Object} o
   * opt.removeBg 是否移除背景图
-  * opt.trigger  是否触发clear事件
+  * 
   */
-	function clear(opt) {
-		opt === undefined && (opt = {});
-		var objects = this.canvas.getObjects().slice();
+	function clear(o) {
 		var backgroundImage = this.backgroundImage;
-		_pushUndo.apply(this, [{
-			action: All_EVT['clear'],
-			target: objects,
-			removeBg: opt.removeBg
-		}]);
-		this.canvas.removeAllObjects(opt.removeBg);
+		this.undoList.length = 0;
+		this.redoList.length = 0;
+		this.canvas.removeAllObjects(o);
 	}
 
 	/**
@@ -702,6 +713,41 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			object.from = ALL_FROM.out;
 			object.remove();
 		}
+	}
+
+	/**
+  * @param {String} url
+  * 图片url地址
+  */
+	function loadBackgroundImage(url) {
+		this.canvas.setBackgroundImage('http://192.168.1.107/mantis/images/mantis_logo.png', this.canvas.renderAll.bind(wb.canvas), {
+			alignX: 'center',
+			alignY: 'center',
+			width: this.canvas.width,
+			height: this.canvas.height
+		});
+	}
+	/**
+  * @param {Number} ratio
+  * 缩放比例
+  */
+	function resize(ratio) {
+		var width = this.setting.width;
+		var height = this.setting.height;
+		var backgroundImage = this.canvas.backgroundImage;
+
+		this.canvas.setWidth(width * ratio);
+		this.canvas.setHeight(height * ratio);
+
+		this.canvas.getObjects().forEach(function (obj) {
+			obj.set({
+				width: obj.width * ratio,
+				height: obj.height * ratio,
+				top: obj.top * ratio,
+				left: obj.left * ratio
+			});
+		});
+		this.canvas.renderAll();
 	}
 	/**
   * 
@@ -739,6 +785,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 	WhiteBoard.prototype.set = set;
 
 	WhiteBoard.prototype.clear = clear;
+
+	WhiteBoard.prototype.resize = resize;
+
+	WhiteBoard.prototype.loadBackgroundImage = loadBackgroundImage;
 
 	WhiteBoard.prototype.ep = new ep();
 
