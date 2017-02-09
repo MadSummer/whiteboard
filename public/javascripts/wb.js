@@ -81,7 +81,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			// 生成对象id的函数
 			return new Date().getTime() + Math.floor(Math.random() * 100);
 		},
-		wrap: null // 当canvas过大导致滚动时，对鼠标的定位需要加上scrollTop和scrollLeft。必须设置，否则溢出时鼠标位置计算出错
+		wrap: null // 支持一般的查找 当canvas过大导致滚动时，对鼠标的定位需要加上scrollTop和scrollLeft。必须设置，否则溢出时鼠标位置计算出错
 	};
 	var ALL_TYPE = {
 		'path': 'path',
@@ -201,13 +201,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		mousedown: function mousedown(opt) {
 			// `this` is a this of WhiteBoard ,use apply bind runtime context
 			// 设置起点
-			var scrollTop = this.canvas.upperCanvasEl.scrollTop;
-			var scrollLeft = this.canvas.upperCanvasEl.scrollLeft;
+			var wrap = document.querySelector(this.setting.wrap);
 			this.setting = {
-				startX: opt.e.clientX - this.canvas._offset.left + scrollLeft,
-				startY: opt.e.clientY - this.canvas._offset.top + scrollTop,
+				startX: opt.e.clientX - this.canvas._offset.left,
+				startY: opt.e.clientY - this.canvas._offset.top,
 				isMouseDown: true
 			};
+			console.log(this.setting.startX, this.setting.startY);
 			// 如果是橡皮，则删除
 			if (this.setting.type === ALL_TYPE.eraser) {
 				opt.target && opt.target.remove();
@@ -219,11 +219,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		},
 		mouseup: function mouseup(opt) {
 			//设置终点
+			var wrap = document.querySelector(this.setting.wrap);
 			this.setting = {
 				endX: opt.e.clientX - this.canvas._offset.left,
 				endY: opt.e.clientY - this.canvas._offset.top,
 				isMouseDown: false
 			};
+
 			// 绘制
 			_render.apply(this);
 			//触发 mouse:up 事件
@@ -235,6 +237,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			// 如果不是鼠标点下则返回
 			if (!this.setting.isMouseDown) return;
 			// 设置终点
+			var wrap = document.querySelector(this.setting.wrap);
 			var endX = opt.e.clientX - this.canvas._offset.left;
 			var endY = opt.e.clientY - this.canvas._offset.top;
 			//解决出界的效果 暂时屏蔽
@@ -512,6 +515,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			ctx.lineCap = 'round';
 			ctx.lineJoin = 'round';
 			ctx.beginPath();
+
+			var wrap = document.querySelector(this.setting.wrap);
+			var ratio = setting.ratio;
+			startX = startX + wrap.scrollLeft;
+			startY = startY + wrap.scrollTop;
+			endX = endX + wrap.scrollLeft;
+			endY = endY + wrap.scrollTop;
 			switch (type) {
 				case ALL_TYPE.line:
 					ctx.moveTo(startX, startY);
@@ -546,11 +556,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					return this.canvas.getLastItem();
 				}
 				// 根据缩放比计算坐标点
-				var ratio = setting.ratio;
-				startX = startX / ratio;
-				startY = startY / ratio;
-				endX = endX / ratio;
-				endY = endY / ratio;
+				var _ratio = setting.ratio;
+				var _wrap = document.querySelector(this.setting.wrap);
+				startX = (startX + _wrap.scrollLeft) / _ratio;
+				startY = (startY + _wrap.scrollTop) / _ratio;
+				endX = (endX + _wrap.scrollLeft) / _ratio;
+				endY = (endY + _wrap.scrollTop) / _ratio;
 
 				// 定义绘制对象的通用属性
 				var o = (_o = {
@@ -608,6 +619,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		}
 		this.undoList.push(o);
 	}
+
 	/************** 以下为暴露给实例的方法******************/
 
 	/**
@@ -720,7 +732,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   * 图片url地址
   */
 	function loadBackgroundImage(url) {
-		this.canvas.setBackgroundImage('http://192.168.1.107/mantis/images/mantis_logo.png', this.canvas.renderAll.bind(wb.canvas), {
+		this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(wb.canvas), {
 			alignX: 'center',
 			alignY: 'center',
 			width: this.canvas.width,

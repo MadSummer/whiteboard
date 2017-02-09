@@ -11,7 +11,7 @@ $(document).ready(function () {
     generateID: function () {
       return (Math.random() * 100000);
     },
-    wrap:''
+    wrap:'body'
   });
   wb.loadBackgroundImage('http://192.168.1.107/mantis/images/mantis_logo.png');
   wb.ep.on('mousedown', function () {
