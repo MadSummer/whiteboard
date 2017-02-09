@@ -28,7 +28,7 @@ const DEFAULT_CONFIG = {
   generateID: function () { // 生成对象id的函数
     return new Date().getTime() + Math.floor(Math.random() * 100);
   },
-  wrap:null // 支持一般的查找 当canvas过大导致滚动时，对鼠标的定位需要加上scrollTop和scrollLeft。必须设置，否则溢出时鼠标位置计算出错
+  wrap: null // 支持一般的查找 当canvas过大导致滚动时，对鼠标的定位需要加上scrollTop和scrollLeft。必须设置，否则溢出时鼠标位置计算出错
 }
 const ALL_TYPE = {
   'path': 'path',
@@ -151,11 +151,10 @@ let eventHandler = {
     // 设置起点
     let wrap = document.querySelector(this.setting.wrap);
     this.setting = {
-      startX: opt.e.clientX - this.canvas._offset.left,
-      startY: opt.e.clientY - this.canvas._offset.top,
+      startX: opt.e.clientX - this.canvas._offset.left + wrap.scrollLeft,
+      startY: opt.e.clientY - this.canvas._offset.top+ wrap.scrollTop,
       isMouseDown: true
     }
-    console.log(this.setting.startX,this.setting.startY)
     // 如果是橡皮，则删除
     if (this.setting.type === ALL_TYPE.eraser) {
       opt.target && opt.target.remove();
@@ -169,11 +168,11 @@ let eventHandler = {
     //设置终点
     let wrap = document.querySelector(this.setting.wrap);
     this.setting = {
-      endX: opt.e.clientX - this.canvas._offset.left,
-      endY: opt.e.clientY - this.canvas._offset.top,
+      endX: opt.e.clientX - this.canvas._offset.left + wrap.scrollLeft,
+      endY: opt.e.clientY - this.canvas._offset.top + wrap.scrollTop,
       isMouseDown: false
     }
-    
+
     // 绘制
     _render.apply(this);
     //触发 mouse:up 事件
@@ -186,15 +185,13 @@ let eventHandler = {
     if (!this.setting.isMouseDown) return;
     // 设置终点
     let wrap = document.querySelector(this.setting.wrap);
-    let endX = opt.e.clientX - this.canvas._offset.left;
-    let endY = opt.e.clientY - this.canvas._offset.top;
     //解决出界的效果 暂时屏蔽
     // endX > this.setting.width ? endX = this.setting.width : endX = endX;
     // endY > this.setting.height ? endY = this.setting.height : endY = endY;
     //设置当前参数
     this.setting = {
-      endX: endX,
-      endY: endY,
+      endX: opt.e.clientX - this.canvas._offset.left + wrap.scrollLeft,
+      endY: opt.e.clientY - this.canvas._offset.top + wrap.scrollTop,
       isMouseDown: true
     }
     // 绘制
@@ -466,12 +463,6 @@ function _render() {
     ctx.lineJoin = 'round';
     ctx.beginPath();
 
-    let wrap = document.querySelector(this.setting.wrap);
-    let ratio = setting.ratio;
-    startX = startX + wrap.scrollLeft;
-    startY = startY + wrap.scrollTop;
-    endX = endX + wrap.scrollLeft;
-    endY = endY + wrap.scrollTop;
     switch (type) {
       case ALL_TYPE.line:
         ctx.moveTo(startX, startY);
@@ -505,12 +496,11 @@ function _render() {
     }
     // 根据缩放比计算坐标点
     let ratio = setting.ratio;
-    let wrap = document.querySelector(this.setting.wrap);
-    startX = (startX + wrap.scrollLeft)/ ratio;
-    startY = (startY + wrap.scrollTop)/ ratio;
-    endX = (endX + wrap.scrollLeft) / ratio;
-    endY = (endY+ wrap.scrollTop) / ratio;
-    
+    startX = startX / ratio;
+    startY = startY / ratio;
+    endX = endX / ratio;
+    endY = endY / ratio;
+
     // 定义绘制对象的通用属性
     let o = {
       type: type,
@@ -632,7 +622,7 @@ function undo() {
 function redo() {
   if (this.redoList.length === 0) return;
   let redo = this.redoList[this.redoList.length - 1];
-  undo.target.from = ALL_FROM.undo;
+  redo.target.from = ALL_FROM.undo;
   switch (redo.action) {
     case All_EVT['object:added']:
       this.canvas.add(redo.target);

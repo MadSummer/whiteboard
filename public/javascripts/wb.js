@@ -207,7 +207,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				startY: opt.e.clientY - this.canvas._offset.top,
 				isMouseDown: true
 			};
-			console.log(this.setting.startX, this.setting.startY);
 			// 如果是橡皮，则删除
 			if (this.setting.type === ALL_TYPE.eraser) {
 				opt.target && opt.target.remove();
@@ -674,7 +673,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 	function redo() {
 		if (this.redoList.length === 0) return;
 		var redo = this.redoList[this.redoList.length - 1];
-		undo.target.from = ALL_FROM.undo;
+		redo.target.from = ALL_FROM.undo;
 		switch (redo.action) {
 			case All_EVT['object:added']:
 				this.canvas.add(redo.target);

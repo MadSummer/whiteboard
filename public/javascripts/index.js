@@ -11,9 +11,11 @@ $(document).ready(function () {
     generateID: function () {
       return (Math.random() * 100000);
     },
+    width: 892,
+    height:1263,
     wrap:'body'
   });
-  wb.loadBackgroundImage('http://192.168.1.107/mantis/images/mantis_logo.png');
+  wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');
   wb.ep.on('mousedown', function () {
     //console.log('mouse:down')
   });
