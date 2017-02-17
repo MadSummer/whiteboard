@@ -289,7 +289,8 @@ function _initFabric() {
   delete this.id;
 
   this.canvas = new fabric.Canvas(id, {
-    selection: false
+    selection: false,
+    //perPixelTargetFind:false 
   });
 
   fabric.Object.prototype.selectable = false;
