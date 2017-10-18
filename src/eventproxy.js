@@ -1,3 +1,9 @@
+/*
+ * @Author: Liu Jing 
+ * @Date: 2017-10-18 11:20:05 
+ * @Last Modified by:   Liu Jing 
+ * @Last Modified time: 2017-10-18 11:20:05 
+ */
 function EventProxy() {
   this.event = {};
 };

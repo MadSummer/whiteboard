@@ -12,8 +12,8 @@ $(document).ready(function () {
       return (Math.random() * 100000);
     },
     width: 892,
-    height:1263,
-    wrap:'body'
+    height: 1263,
+    wrap: 'body'
   });
   wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');
   wb.ep.on('mousedown', function () {
@@ -79,7 +79,7 @@ $(document).ready(function () {
   wb.ep.on('clear', function (obj) {
     if (obj.from == 'out') return;
     sync({
-      action:'clear'
+      action: 'clear'
     })
   });
   // 注册事件
@@ -96,7 +96,7 @@ $(document).ready(function () {
     if (action) {
       if (action === 'clear') {
         wb.clear({
-          from:'draw',
+          from: 'draw',
           removeBg: false
         });
       }
@@ -147,7 +147,7 @@ $(document).ready(function () {
   // 
   //
   // 监听 
-  var socket = io.connect('http://192.168.1.38:3000');
+  var socket = io.connect('http://192.168.1.38:4000');
   socket.on('server', function (msg) {
     switch (msg.action) {
       case 'add':
@@ -161,8 +161,11 @@ $(document).ready(function () {
       case 'clear':
         wb.clear({
           removeBg: false,
-          from:'out'
+          from: 'out'
         });
+        break;
+      case 'member':
+        $('#member').text(msg.data)
         break;
       default:
         break;
@@ -170,9 +173,10 @@ $(document).ready(function () {
   })
   socket.on('history', function (msg) {
     for (var k in msg) {
-       wb.render(msg[k])
+      wb.render(msg[k])
     }
   })
+
   function sync(opt) {
     socket.emit('client', opt)
   }

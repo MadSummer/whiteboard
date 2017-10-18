@@ -3,28 +3,24 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "dev": "webpack-dev-server",
+    "socket": "node ./src/socket.js",
+    "bulid": "webpack",
+    "demo": "npm-run-all socket dev"
   },
   "dependencies": {
-    "body-parser": "~1.15.1",
-    "cookie-parser": "~1.4.3",
-    "debug": "~2.2.0",
-    "ejs": "~2.4.1",
-    "express": "~4.13.4",
-    "morgan": "~1.7.0",
-    "serve-favicon": "~2.3.0",
     "socket.io": "^1.5.1"
   },
   "devDependencies": {
-    "babel-preset-es2015": "^6.18.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-es2015": "^6.24.1",
+    "cross-env": "^5.1.0",
     "gulp": "^3.9.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-clean-css": "^2.3.2",
-    "gulp-less": "^3.3.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^2.0.0",
-    "less": "^2.7.2",
-    "webpack": "^1.14.0",
-    "webpack-stream": "^3.2.0"
+    "npm-run-all": "^4.1.1",
+    "webpack": "^3.7.1",
+    "webpack-dev-server": "^2.9.2"
   }
 }

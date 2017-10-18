@@ -2,19 +2,28 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-18 11:20:12 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-18 18:03:55
+ * @Last Modified time: 2017-10-18 15:29:05
  */
-/*@const require*/
-const version = require('./version');
-const cursor = require('./cursor');
-const ep = require('./eventproxy');
+(function (factory) {
+  if (typeof define === 'function' && define.amd) {
+    define(['fabric'], factory);
+  } else {
+    factory(window.fabric);
+  };
+})(function (fabric) {
+  /*@var require*/
+  var version = require('./version');
+  var cursor = require('./cursor');
+  var ep = require('./eventproxy');
+});
 
-/*@const global var*/
-const global = window;
-const doc = document;
 
-/*@const default var*/
-const DEFAULT_CONFIG = {
+/*@var global var*/
+var global = window;
+var doc = document;
+
+/*@var default var*/
+var DEFAULT_CONFIG = {
   width: 500, //画布的宽
   height: 375, // 画布的高
   ratio: 1, // 缩放比
@@ -36,7 +45,7 @@ const DEFAULT_CONFIG = {
   },
   wrap: null // 支持一般的查找 当canvas过大导致滚动时，对鼠标的定位需要加上scrollTop和scrollLeft。必须设置，否则溢出时鼠标位置计算出错
 }
-const ALL_TYPE = {
+var ALL_TYPE = {
   'path': 'path',
   'circle': 'circle',
   'rect': 'rect',
@@ -44,7 +53,7 @@ const ALL_TYPE = {
   'eraser': 'eraser',
   'clear': 'clear',
 }
-const All_EVT = {
+var All_EVT = {
   'mouse:down': 'mousedown',
   'mouse:up': 'mouseup',
   'mouse:move': 'mousemove',
@@ -57,7 +66,7 @@ const All_EVT = {
   'path:created': 'pathCreated',
   'clear': 'clear'
 }
-const ALL_FROM = {
+var ALL_FROM = {
   draw: 'draw', // 操作来自_render
   undo: 'undo', // 操作来自undo,redo
   out: 'out' // 操作来自render
@@ -68,16 +77,17 @@ class WhiteBoard {
    * @param {object} o 
    * @memberof WhiteBoard
    */
-  constructor(o) { 
-    
+  varructor(o) {
+
     this._setting = DEFAULT_CONFIG;
 
     this.undoList = [];
- 
+
     this.redoList = [];
 
     this._init(o);
 
+    alert(1)
   }
   /**  
    * @param {Object} o
@@ -94,7 +104,7 @@ class WhiteBoard {
    * @memberof WhiteBoard
    */
   _init(o) {
-    alert(1)
+
     if (!(o instanceof Object)) return console.error('param error');
 
     let container = doc.getElementById(o.id);
