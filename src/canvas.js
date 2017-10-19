@@ -2,7 +2,7 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-18 11:20:12 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-18 18:03:55
+ * @Last Modified time: 2017-10-18 18:12:14
  */
 /*@const require*/
 const version = require('./version');
@@ -94,7 +94,7 @@ class WhiteBoard {
    * @memberof WhiteBoard
    */
   _init(o) {
-    alert(1)
+    alert(11)
     if (!(o instanceof Object)) return console.error('param error');
 
     let container = doc.getElementById(o.id);

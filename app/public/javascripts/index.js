@@ -147,7 +147,7 @@ $(document).ready(function () {
   // 
   //
   // 监听 
-  var socket = io.connect('http://192.168.1.38:4000');
+  var socket = io.connect( window.location.hostname + ':4000');
   socket.on('server', function (msg) {
     switch (msg.action) {
       case 'add':

@@ -1,5 +1,5 @@
 const path = require('path');
-const http = require('http');
+const config = require('./config');
 module.exports = {
   entry: './src/canvas.js',
   watch: false,
@@ -22,15 +22,16 @@ module.exports = {
   },
   devServer: {
     open: true,
+    openPage:'app/index.html',
     disableHostCheck: true,
-    host: '192.168.1.38',
+    host: config.host,
     inline: true,
     watchContentBase: true,
     //useLocalIp: true,
     hot: true,
-    contentBase: path.join(__dirname, '/app/'),
+    contentBase: path.join(__dirname + '/app'),
     publicPath: './app/public/',
     compress: false,
-    port: 3000
+    port: config.port
   }
 }
