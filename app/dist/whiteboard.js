@@ -57,7 +57,7 @@
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
 /******/
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
+/******/ 	__webpack_require__.p = "E:\\node\\whiteboard\\app\\dist\\";
 /******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(__webpack_require__.s = 0);
@@ -79,8 +79,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 /*
  * @Author: Liu Jing 
  * @Date: 2017-10-18 11:20:12 
- * @Last Modified by:   Liu Jing 
- * @Last Modified time: 2017-10-18 11:20:12 
+ * @Last Modified by: Liu Jing
+ * @Last Modified time: 2017-10-19 11:52:56
  */
 /*@const require*/
 var version = __webpack_require__(1);
@@ -161,7 +161,7 @@ var WhiteBoard = function () {
 
     this._init(o);
   }
-  /**
+  /**  
    * @param {Object} o
    * @param {string} o.id
    * container element id

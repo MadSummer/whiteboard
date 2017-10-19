@@ -6,7 +6,7 @@
     "dev": "webpack-dev-server",
     "socket": "node ./src/socket.js",
     "bulid": "webpack",
-    "demo": "npm-run-all --parallel socket dev"
+    "demo": "npm-run-all --parallel bulid socket dev"
   },
   "dependencies": {
     "socket.io": "^1.5.1"

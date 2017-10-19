@@ -2,7 +2,7 @@ const path = require('path');
 const config = require('./config');
 module.exports = {
   entry: './src/canvas.js',
-  watch: false,
+  watch: true,
   module: {
     rules: [{
       test: /\.js$/,
@@ -17,12 +17,13 @@ module.exports = {
     }]
   },
   output: {
-    path: path.join(__dirname, '/dist/'),
-    filename: 'whiteboard.js'
+    path: path.join(__dirname, '/app/dist/'),
+    filename: 'whiteboard.js',
+    publicPath:path.join(__dirname, '/app/dist/')
   },
   devServer: {
     open: true,
-    openPage:'app/index.html',
+    //openPage:'app/index.html',
     disableHostCheck: true,
     host: config.host,
     inline: true,
@@ -32,6 +33,7 @@ module.exports = {
     contentBase: path.join(__dirname + '/app'),
     publicPath: './app/public/',
     compress: false,
-    port: config.port
+    port: config.port,
+    publicPath:path.join(__dirname, '/app/dist/')
   }
 }
