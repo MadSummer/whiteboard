@@ -2,13 +2,7 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-20 16:14:37
- */
-/*
- * @Author: Liu Jing 
- * @Date: 2017-10-18 11:20:12 
- * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-20 11:15:43
+ * @Last Modified time: 2017-10-20 18:08:18
  */
 /*@const require*/
 const version = require('./version');
@@ -29,7 +23,8 @@ const DEFAULT_CONFIG = {
   fillColor: '', //  fill color
   generateID: function () { // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
-  }
+  },
+  maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 }
 
 const global = window;
@@ -201,7 +196,7 @@ class WhiteBoard {
   }
   /**
    * 
-   * 
+   * define setter and getter
    * @memberof WhiteBoard
    */
   _defineSetter() {
@@ -213,8 +208,9 @@ class WhiteBoard {
             return this._setting[prop];
           },
           set: value => {
-            this._setting[prop] = value;
-            this._propChangeCallback(prop, value);
+            if (this._propChangeCallback(prop, value)) {
+              this._setting[prop] = value;
+            }
           }
         });
         this[prop] = value;
@@ -232,9 +228,11 @@ class WhiteBoard {
   _propChangeCallback(prop, value) {
     switch (prop) {
       case 'width':
+        if (value > this._setting.maxSize) return false;
         this.canvas.setWidth(value);
         break;
       case 'height':
+        if (value > this._setting.maxSize) return false;
         this.canvas.setHeight(value);
         break;
       case 'strokeColor':
@@ -266,6 +264,8 @@ class WhiteBoard {
 
         break;
       case 'ratio':
+        let maxSize = this._setting.maxSize;
+        if (this.originalWidth * value > maxSize || this.originalHeight * value > maxSize) return false;
         this.width = this.originalWidth * value;
         this.height = this.originalHeight * value;
         this.canvas.setZoom(value);
@@ -275,11 +275,14 @@ class WhiteBoard {
           this._setting.generateID = function () {
             return new Date().getTime() + Math.floor(Math.random() * 100);
           }
+        } else {
+          return false;
         }
         break;
       default:
         break;
     }
+    return true;
   }
   eventHandler = {
 
@@ -662,22 +665,31 @@ class WhiteBoard {
     }
   }
   /**
-   * @private
    * 暴露setting接口
    * @param {object} o
-   * 以对象的方式设置instance
+   * seting object
+   * @return {boolean}
+   * Indicates whether the settings are successful
    */
   set(o) {
-    if (arguments.length > 1) {
+    let flag = true;
+    if (arguments.length == 2) {
       this[arguments[0]] = arguments[1];
+      if (this[arguments[0]] !== arguments[1]) {
+        flag = false
+      }
     } else {
       for (let prop in o) {
         if (o.hasOwnProperty(prop)) {
           let value = o[prop];
           this[prop] = value;
+          if (this[prop] !== value) {
+            flag = false
+          }
         }
       }
     }
+    return flag;
   }
 
   /**
@@ -716,8 +728,8 @@ class WhiteBoard {
     this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(wb.canvas), {
       alignX: 'center',
       alignY: 'center',
-      width: this.width,
-      height: this.height
+      width: this.originalWidth,
+      height: this.originalHeight
     })
   }
   /**
@@ -725,7 +737,7 @@ class WhiteBoard {
    * 缩放比例
    */
   resize(ratio) {
-    this.ratio = ratio;
+    return this.set('ratio', ratio);
   }
 
   ep = new ep();

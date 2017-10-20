@@ -87,13 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-20 16:14:37
- */
-/*
- * @Author: Liu Jing 
- * @Date: 2017-10-18 11:20:12 
- * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-20 11:15:43
+ * @Last Modified time: 2017-10-20 18:08:18
  */
 /*@const require*/
 var version = __webpack_require__(2);
@@ -115,7 +109,8 @@ var DEFAULT_CONFIG = {
   generateID: function generateID() {
     // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
-  }
+  },
+  maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 };
 
 var global = window;
@@ -291,7 +286,7 @@ var WhiteBoard = function () {
     }
     /**
      * 
-     * 
+     * define setter and getter
      * @memberof WhiteBoard
      */
 
@@ -308,8 +303,9 @@ var WhiteBoard = function () {
               return _this._setting[prop];
             },
             set: function set(value) {
-              _this._setting[prop] = value;
-              _this._propChangeCallback(prop, value);
+              if (_this._propChangeCallback(prop, value)) {
+                _this._setting[prop] = value;
+              }
             }
           });
           _this[prop] = value;
@@ -334,9 +330,11 @@ var WhiteBoard = function () {
     value: function _propChangeCallback(prop, value) {
       switch (prop) {
         case 'width':
+          if (value > this._setting.maxSize) return false;
           this.canvas.setWidth(value);
           break;
         case 'height':
+          if (value > this._setting.maxSize) return false;
           this.canvas.setHeight(value);
           break;
         case 'strokeColor':
@@ -368,6 +366,8 @@ var WhiteBoard = function () {
 
           break;
         case 'ratio':
+          var maxSize = this._setting.maxSize;
+          if (this.originalWidth * value > maxSize || this.originalHeight * value > maxSize) return false;
           this.width = this.originalWidth * value;
           this.height = this.originalHeight * value;
           this.canvas.setZoom(value);
@@ -377,11 +377,14 @@ var WhiteBoard = function () {
             this._setting.generateID = function () {
               return new Date().getTime() + Math.floor(Math.random() * 100);
             };
+          } else {
+            return false;
           }
           break;
         default:
           break;
       }
+      return true;
     }
   }, {
     key: '_registerEventListener',
@@ -666,25 +669,34 @@ var WhiteBoard = function () {
       }
     }
     /**
-     * @private
      * 暴露setting接口
      * @param {object} o
-     * 以对象的方式设置instance
+     * seting object
+     * @return {boolean}
+     * Indicates whether the settings are successful
      */
 
   }, {
     key: 'set',
     value: function set(o) {
-      if (arguments.length > 1) {
+      var flag = true;
+      if (arguments.length == 2) {
         this[arguments[0]] = arguments[1];
+        if (this[arguments[0]] !== arguments[1]) {
+          flag = false;
+        }
       } else {
         for (var prop in o) {
           if (o.hasOwnProperty(prop)) {
             var value = o[prop];
             this[prop] = value;
+            if (this[prop] !== value) {
+              flag = false;
+            }
           }
         }
       }
+      return flag;
     }
 
     /**
@@ -732,8 +744,8 @@ var WhiteBoard = function () {
       this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(wb.canvas), {
         alignX: 'center',
         alignY: 'center',
-        width: this.width,
-        height: this.height
+        width: this.originalWidth,
+        height: this.originalHeight
       });
     }
     /**
@@ -744,7 +756,7 @@ var WhiteBoard = function () {
   }, {
     key: 'resize',
     value: function resize(ratio) {
-      this.ratio = ratio;
+      return this.set('ratio', ratio);
     }
   }]);
 

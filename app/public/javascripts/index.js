@@ -6,13 +6,15 @@ $(document).ready(function () {
   $('#whiteboard').attr('width', width);
   $('#whiteboard').attr('height', height);
   wb = new WhiteBoard({
+    ratio:.5,
     id: 'whiteboard',
-    stroke: 'red',
+    stroke: 'red', 
     generateID: function () {
       return (Math.random() * 100000);
     },
     width: 892,
     height: 1263,
+    maxSize:8192,
     wrap: '#canvas-scroll-wp'
   });
   wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');
