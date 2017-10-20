@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-20 18:08:18
+ * @Last Modified time: 2017-10-20 18:11:42
  */
 /*@const require*/
 var version = __webpack_require__(2);
@@ -373,10 +373,8 @@ var WhiteBoard = function () {
           this.canvas.setZoom(value);
           break;
         case 'generateID':
-          if (typeof value !== 'function') {
-            this._setting.generateID = function () {
-              return new Date().getTime() + Math.floor(Math.random() * 100);
-            };
+          if (typeof value === 'function') {
+            this._setting.generateID = value;
           } else {
             return false;
           }
