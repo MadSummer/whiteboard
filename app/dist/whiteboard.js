@@ -67,6 +67,13 @@
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
+module.exports = __webpack_require__(1);
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
 
@@ -78,43 +85,42 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 /*
  * @Author: Liu Jing 
+ * @Date: 2017-10-20 11:16:02 
+ * @Last Modified by: Liu Jing
+ * @Last Modified time: 2017-10-20 16:14:37
+ */
+/*
+ * @Author: Liu Jing 
  * @Date: 2017-10-18 11:20:12 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-19 11:52:56
+ * @Last Modified time: 2017-10-20 11:15:43
  */
 /*@const require*/
-var version = __webpack_require__(1);
-var cursor = __webpack_require__(2);
-var ep = __webpack_require__(3);
-
-/*@const global var*/
-var global = window;
-var doc = document;
+var version = __webpack_require__(2);
+var cursor = __webpack_require__(3);
+var ep = __webpack_require__(4);
+var polyfill = __webpack_require__(5);
 
 /*@const default var*/
 var DEFAULT_CONFIG = {
-  width: 500, //画布的宽
-  height: 375, // 画布的高
-  ratio: 1, // 缩放比
-  startX: 0, // 开始坐标，内部自动处理
-  startY: 0,
-  endX: 0, // 截至坐标，内部自动处理
-  endY: 0,
-  undoMax: 10, // 撤销最大数
-  type: 'path', //默认配置
-  fontSize: 16, //字号
-  strokeWidth: 2, //线宽，最小为2
-  stroke: '#222', // 线条颜色
-  fillColor: '', // 填充颜色
-  isMouseDown: false, //鼠标是否按下的标识
-  action: null, // 暂定
-  trigger: true, // 是否触发事件  废除
+  width: 500, //canvas width
+  height: 375, // canvas height
+  ratio: 1, // zoom value
+  undoMax: 10, // max undo limit
+  type: 'path', // default draw type
+  fontSize: 16, // fon size
+  strokeWidth: 2, // stroke line width
+  strokeColor: 'red', // stroke line color
+  fillColor: '', //  fill color
   generateID: function generateID() {
-    // 生成对象id的函数
+    // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
-  },
-  wrap: null // 支持一般的查找 当canvas过大导致滚动时，对鼠标的定位需要加上scrollTop和scrollLeft。必须设置，否则溢出时鼠标位置计算出错
+  }
 };
+
+var global = window;
+var doc = document;
+
 var ALL_TYPE = {
   'path': 'path',
   'circle': 'circle',
@@ -137,10 +143,12 @@ var All_EVT = {
   'clear': 'clear'
 };
 var ALL_FROM = {
-  draw: 'draw', // 操作来自_render
-  undo: 'undo', // 操作来自undo,redo
-  out: 'out' // 操作来自render
-};
+  draw: 'draw', // object from _render
+  undo: 'undo', // object from undo,redo
+  out: 'out' // object from render
+
+  /* polyfill for some browser */
+};polyfill();
 
 var WhiteBoard = function () {
   /**
@@ -153,7 +161,7 @@ var WhiteBoard = function () {
 
     _initialiseProps.call(this);
 
-    this._setting = DEFAULT_CONFIG;
+    this._setting = Object.assign(DEFAULT_CONFIG, o);
 
     this.undoList = [];
 
@@ -187,7 +195,9 @@ var WhiteBoard = function () {
 
       if (!container) return console.error('can\'t find the element which id is' + o.id);
 
-      this.id = o.id;
+      this.originalWidth = o.width;
+
+      this.originalHeight = o.height;
 
       // init fabrci
       this._initFabric();
@@ -197,12 +207,8 @@ var WhiteBoard = function () {
 
       // 设置setting的getter和setter  
       this._defineSetter();
-
-      // 将初始化参数赋值给setting  
-      for (var k in o) {
-        this.setting = o;
-      }
     }
+
     /**
      * 
      * Create an instance of fabric
@@ -213,16 +219,16 @@ var WhiteBoard = function () {
     key: '_initFabric',
     value: function _initFabric() {
 
-      var id = this.id;
+      var id = this._setting.id;
 
-      delete this.id;
+      var self = this;
 
       this.canvas = new fabric.Canvas(id, {
         selection: false
         //perPixelTargetFind:false 
       });
 
-      fabric.Object.prototype.selectable = false;
+      //fabric.Object.prototype.selectable = false;
 
       this.ctx = this.canvas.upperCanvasEl.getContext('2d');
 
@@ -292,81 +298,90 @@ var WhiteBoard = function () {
   }, {
     key: '_defineSetter',
     value: function _defineSetter() {
-      Object.defineProperty(this, 'setting', {
+      var _this = this;
 
-        get: function get() {
-          return this._setting;
-        },
-
-        set: function set(o) {
-
-          if (!(o instanceof Object)) return console.error('the param need a object');
-
-          for (var k in o) {
-
-            var v = o[k];
-
-            this._setting[k] = v;
-
-            switch (k) {
-              case 'width':
-                this.canvas.setWidth(v);
-                break;
-              case 'height':
-                this.canvas.setHeight(v);
-                break;
-              case 'stroke':
-                this.canvas.freeDrawingBrush.color = v;
-                break;
-              case 'type':
-
-                this.canvas.isDrawingMode = false;
-
-                this.canvas.hoverCursor = 'default';
-
-                this.canvas.selectable = false;
-
-                if (v === ALL_TYPE.path) {
-                  this.canvas.isDrawingMode = true;
-                }
-
-                if (v === ALL_TYPE.eraser) {
-                  this.canvas.hoverCursor = cursor.eraser;
-                }
-                break;
-              case 'strokeWidth':
-
-                this.canvas.freeDrawingBrush.width = parseInt(v) > 2 ? parseInt(v) : 2;
-
-                if (parseInt(v) === 1) {
-                  this._setting.strokeWidth = 2;
-                }
-
-                break;
-              case 'ratio':
-                var width = this.setting.width;
-                var height = this.setting.height;
-                var backgroundImage = this.canvas.backgroundImage;
-
-                this.canvas.setWidth(width * v);
-                this.canvas.setHeight(height * v);
-                this.canvas.setZoom(v);
-                break;
-              case 'generateID':
-                if (typeof v !== 'function') {
-                  this._setting.generateID = function () {
-                    return new Date().getTime() + Math.floor(Math.random() * 100);
-                  };
-                }
-                break;
-              default:
-                break;
+      var _loop = function _loop(prop) {
+        if (_this._setting.hasOwnProperty(prop)) {
+          var value = _this._setting[prop];
+          Object.defineProperty(_this, prop, {
+            get: function get() {
+              return _this._setting[prop];
+            },
+            set: function set(value) {
+              _this._setting[prop] = value;
+              _this._propChangeCallback(prop, value);
             }
-          }
+          });
+          _this[prop] = value;
         }
-      });
+      };
 
-      this.setting = this._setting;
+      for (var prop in this._setting) {
+        _loop(prop);
+      }
+    }
+    /**
+     * 
+     * 
+     * @param {string} prop
+     * prop
+     * @param {string | function} value
+     * @memberof WhiteBoard
+     */
+
+  }, {
+    key: '_propChangeCallback',
+    value: function _propChangeCallback(prop, value) {
+      switch (prop) {
+        case 'width':
+          this.canvas.setWidth(value);
+          break;
+        case 'height':
+          this.canvas.setHeight(value);
+          break;
+        case 'strokeColor':
+          this.canvas.freeDrawingBrush.color = value;
+          break;
+        case 'type':
+
+          this.canvas.isDrawingMode = false;
+
+          this.canvas.hoverCursor = 'default';
+
+          this.canvas.selectable = false;
+
+          if (value === ALL_TYPE.path) {
+            this.canvas.isDrawingMode = true;
+          }
+
+          if (value === ALL_TYPE.eraser) {
+            this.canvas.hoverCursor = cursor.eraser;
+          }
+          break;
+        case 'strokeWidth':
+
+          this.canvas.freeDrawingBrush.width = parseInt(value) > 2 ? parseInt(value) : 2;
+
+          if (parseInt(value) === 1) {
+            this._setting.strokeWidth = 2;
+          }
+
+          break;
+        case 'ratio':
+          this.width = this.originalWidth * value;
+          this.height = this.originalHeight * value;
+          this.canvas.setZoom(value);
+          break;
+        case 'generateID':
+          if (typeof value !== 'function') {
+            this._setting.generateID = function () {
+              return new Date().getTime() + Math.floor(Math.random() * 100);
+            };
+          }
+          break;
+        default:
+          break;
+      }
     }
   }, {
     key: '_registerEventListener',
@@ -377,18 +392,18 @@ var WhiteBoard = function () {
      * @memberof WhiteBoard
      */
     value: function _registerEventListener() {
-      var _this = this;
+      var _this2 = this;
 
-      var _loop = function _loop(x) {
-        _this.canvas.on(x, function (opt) {
-          var handler = _this.eventHandler[All_EVT[x]];
+      var _loop2 = function _loop2(x) {
+        _this2.canvas.on(x, function (opt) {
+          var handler = _this2.eventHandler[All_EVT[x]];
           if (!handler) return;
-          handler.apply(_this, [opt]);
+          handler.apply(_this2, [opt]);
         });
       };
 
       for (var x in All_EVT) {
-        _loop(x);
+        _loop2(x);
       }
     }
     /**
@@ -441,6 +456,8 @@ var WhiteBoard = function () {
             stroke: o.stroke,
             strokeWidth: o.strokeWidth,
             fill: o.fill,
+            strokeLineCap: 'round',
+            oCoords: o.oCoords,
             id: o.id
           });
         default:
@@ -455,47 +472,47 @@ var WhiteBoard = function () {
   }, {
     key: '_render',
     value: function _render() {
-      var setting = this.setting;
-      var type = setting.type;
+      var type = this.type;
       if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type) return;
-      var startX = setting.startX;
-      var startY = setting.startY;
-      var endX = setting.endX;
-      var endY = setting.endY;
+      var startX = this.startX;
+      var startY = this.startY;
+      var endX = this.endX;
+      var endY = this.endY;
       //这里做个判断，如果起点与终点均过于小则不添加
       if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
 
-      var fillColor = setting.fillColor;
-      var strokeWidth = setting.strokeWidth;
-      var stroke = setting.stroke;
-      var isMouseDown = this.setting.isMouseDown;
+      var fillColor = this.fillColor;
+      var strokeWidth = this.strokeWidth;
+      var stroke = this.stroke;
+      var isMouseDown = this.isMouseDown;
+      var ctx = this.ctx;
+      var ratio = this.ratio;
       // mousemove _render at upperCanvasEl with temp 
       if (isMouseDown) {
         if (ALL_TYPE.path === type) return;
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        var ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         ctx.strokeStyle = stroke;
         //原生api
-        ctx.lineWidth = strokeWidth * setting.ratio;
+        ctx.lineWidth = strokeWidth * this.ratio;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.beginPath();
 
         switch (type) {
           case ALL_TYPE.line:
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(endX, endY);
+            ctx.moveTo(startX * ratio, startY * ratio);
+            ctx.lineTo(endX * ratio, endY * ratio);
             break;
           case ALL_TYPE.circle:
-            var radius = Math.sqrt(Math.pow(startX - endX, 2) + Math.pow(startY - endY, 2));
-            ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+            var radius = Math.sqrt(Math.pow(startX * ratio - endX * ratio, 2) + Math.pow(startY * ratio - endY * ratio, 2));
+            ctx.arc(startX * ratio, startY * ratio, radius, 0, 2 * Math.PI);
             break;
           case ALL_TYPE.rect:
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(endX, startY);
-            ctx.lineTo(endX, endY);
-            ctx.lineTo(startX, endY);
-            ctx.lineTo(startX, startY);
+            ctx.moveTo(startX * ratio, startY * ratio);
+            ctx.lineTo(endX * ratio, startY * ratio);
+            ctx.lineTo(endX * ratio, endY * ratio);
+            ctx.lineTo(startX * ratio, endY * ratio);
+            ctx.lineTo(startX * ratio, startY * ratio);
           default:
             break;
         }
@@ -507,27 +524,20 @@ var WhiteBoard = function () {
           var _o;
 
           // 鼠标up，清空上层
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
           // 创建一个空对象
           var object = null;
           //如果是path，对象直接生成，返回这个path
           if (type === ALL_TYPE.path) {
             return this.canvas.getLastItem();
           }
-          // 根据缩放比计算坐标点
-          var ratio = setting.ratio;
-          startX = startX / ratio;
-          startY = startY / ratio;
-          endX = endX / ratio;
-          endY = endY / ratio;
-
           // 定义绘制对象的通用属性
           var o = (_o = {
             type: type,
             stroke: stroke,
             strokeWidth: strokeWidth,
             strokeLineCap: 'round'
-          }, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _defineProperty(_o, 'id', this.setting.generateID()), _o);
+          }, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _defineProperty(_o, 'id', this.generateID()), _o);
           // 根据type不同(line || circle  || arc)给o增加属性
 
           switch (type) {
@@ -555,7 +565,7 @@ var WhiteBoard = function () {
               break;
           }
           //绘制对象，将对象返回
-          object = _createObject(o);
+          object = this._createObject(o);
 
           //表明对象来源
           object.from = ALL_FROM.draw;
@@ -574,7 +584,7 @@ var WhiteBoard = function () {
   }, {
     key: '_pushUndo',
     value: function _pushUndo(o) {
-      if (this.undoList.length >= this.setting.undoMax) {
+      if (this.undoList.length >= this.sundoMax) {
         this.undoList.shift();
       }
       this.undoList.push(o);
@@ -646,6 +656,8 @@ var WhiteBoard = function () {
 
       var object = this._createObject(opt);
 
+      //    let ratio = 
+
       // 表明对象来源为外界（非绘制，非undo）
 
       if (object) {
@@ -664,11 +676,14 @@ var WhiteBoard = function () {
     key: 'set',
     value: function set(o) {
       if (arguments.length > 1) {
-        var temp = {};
-        temp[arguments[0]] = temp[arguments[1]];
-        this.setting = temp;
+        this[arguments[0]] = arguments[1];
       } else {
-        this.setting = o;
+        for (var prop in o) {
+          if (o.hasOwnProperty(prop)) {
+            var value = o[prop];
+            this[prop] = value;
+          }
+        }
       }
     }
 
@@ -717,8 +732,8 @@ var WhiteBoard = function () {
       this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(wb.canvas), {
         alignX: 'center',
         alignY: 'center',
-        width: this.canvas.width,
-        height: this.canvas.height
+        width: this.width,
+        height: this.height
       });
     }
     /**
@@ -729,42 +744,7 @@ var WhiteBoard = function () {
   }, {
     key: 'resize',
     value: function resize(ratio) {
-      var width = this.setting.width;
-      var height = this.setting.height;
-      var backgroundImage = this.canvas.backgroundImage;
-      if (backgroundImage) {
-        backgroundImage.width = backgroundImage.width * ratio;
-        backgroundImage.height = backgroundImage.height * ratio;
-      }
-
-      this.canvas.setWidth(width * ratio);
-      this.canvas.setHeight(height * ratio);
-
-      this.canvas.getObjects().forEach(function (obj) {
-        /* obj.set({
-          width: obj.width * ratio,
-          height: obj.height * ratio,
-          top: obj.top * ratio,
-          left: obj.left * ratio
-        }) */
-        var scaleX = obj.scaleX;
-        var scaleY = obj.scaleY;
-        var left = obj.left;
-        var top = obj.top;
-
-        var tempScaleX = scaleX * ratio;
-        var tempScaleY = scaleY * ratio;
-        var tempLeft = left * ratio;
-        var tempTop = top * ratio;
-
-        obj.scaleX = tempScaleX;
-        obj.scaleY = tempScaleY;
-        obj.left = tempLeft;
-        obj.top = tempTop;
-
-        obj.setCoords();
-      });
-      this.canvas.renderAll();
+      this.ratio = ratio;
     }
   }]);
 
@@ -779,14 +759,15 @@ var _initialiseProps = function _initialiseProps() {
     mousedown: function mousedown(opt) {
       // `this` is a instance of WhiteBoard ,use apply bind runtime context
       // 设置起点
-      var wrap = document.querySelector(this.setting.wrap);
+      var wrap = document.querySelector(this.wrap);
+      var pointer = this.canvas.getPointer(opt.e);
       this.set({
-        startX: opt.e.clientX - this.canvas._offset.left + wrap.scrollLeft,
-        startY: opt.e.clientY - this.canvas._offset.top + wrap.scrollTop,
+        startX: pointer.x,
+        startY: pointer.y,
         isMouseDown: true
       });
       // 如果是橡皮，则删除
-      if (this.setting.type === ALL_TYPE.eraser) {
+      if (this.type === ALL_TYPE.eraser) {
         opt.target && opt.target.remove();
       }
       // 触发mouse:down 事件
@@ -796,10 +777,13 @@ var _initialiseProps = function _initialiseProps() {
     },
     mouseup: function mouseup(opt) {
       //设置终点
-      var wrap = document.querySelector(this.setting.wrap);
+      var wrap = document.querySelector(this.wrap);
+
+      var pointer = this.canvas.getPointer(opt.e);
+
       this.set({
-        endX: opt.e.clientX - this.canvas._offset.left + wrap.scrollLeft,
-        endY: opt.e.clientY - this.canvas._offset.top + wrap.scrollTop,
+        endX: pointer.x,
+        endY: pointer.y,
         isMouseDown: false
       });
 
@@ -812,16 +796,17 @@ var _initialiseProps = function _initialiseProps() {
     },
     mousemove: function mousemove(opt) {
       // 如果不是鼠标点下则返回
-      if (!this.setting.isMouseDown) return;
+      if (!this.isMouseDown) return;
       // 设置终点
-      var wrap = document.querySelector(this.setting.wrap);
+      var wrap = document.querySelector(this.wrap);
       //解决出界的效果 暂时屏蔽
-      // endX > this.setting.width ? endX = this.setting.width : endX = endX;
-      // endY > this.setting.height ? endY = this.setting.height : endY = endY;
+      // endX > this.width ? endX = this.width : endX = endX;
+      // endY > this.height ? endY = this.height : endY = endY;
       //设置当前参数
+      var pointer = this.canvas.getPointer(opt.e);
       this.set({
-        endX: opt.e.clientX - this.canvas._offset.left + wrap.scrollLeft,
-        endY: opt.e.clientY - this.canvas._offset.top + wrap.scrollTop
+        endX: pointer.x,
+        endY: pointer.y
       });
       // 绘制
       this._render();
@@ -841,7 +826,7 @@ var _initialiseProps = function _initialiseProps() {
     pathCreated: function pathCreated(o) {
       // 因为object:added再mouseup之前，需要再此设置
       /*if (!('id' in o)) {
-        o.id = this.setting.generateID();
+        o.id = this.generateID();
       }
       if (!('from' in o)) {
         o.from = ALL_FROM.draw;
@@ -850,7 +835,7 @@ var _initialiseProps = function _initialiseProps() {
     objectAdded: function objectAdded(o) {
       // 因为freeDrawing的object:added再mouseup之前，需要再此设置
       if (!('id' in o.target)) {
-        o.target.id = this.setting.generateID();
+        o.target.id = this.generateID();
       }
       if (!('from' in o.target)) {
         o.target.from = ALL_FROM.draw;
@@ -897,7 +882,7 @@ global.WhiteBoard = WhiteBoard;
 module.exports = WhiteBoard;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -914,7 +899,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -932,7 +917,80 @@ module.exports = {
 };
 
 /***/ }),
-/* 3 */
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/*
+ * @Author: Liu Jing 
+ * @Date: 2017-10-18 11:20:05 
+ * @Last Modified by: Liu Jing
+ * @Last Modified time: 2017-10-20 15:41:30
+ */
+var EventProxy = function () {
+  /**
+   * Creates an instance of EventProxy.
+   * @memberof EventProxy
+   */
+  function EventProxy() {
+    _classCallCheck(this, EventProxy);
+
+    this.event = {};
+  }
+  /**
+   * 
+   * 
+   * @param {string} evt 
+   * @param {any} data 
+   * @returns 
+   * @memberof EventProxy
+   */
+
+
+  _createClass(EventProxy, [{
+    key: "fire",
+    value: function fire(evt, data) {
+      var event = this.event[evt];
+      if (!event) return;
+      event.cbs.forEach(function (cb) {
+        cb(data);
+      });
+    }
+    /**
+     * 
+     * 
+     * @param {string} evt 
+     * @param {function} cb 
+     * @memberof EventProxy
+     */
+
+  }, {
+    key: "on",
+    value: function on(evt, cb) {
+      if (this.event[evt]) {
+        this.event[evt].cbs.push(cb);
+      } else {
+        this.event[evt] = {
+          evt: evt,
+          cbs: [cb]
+        };
+      }
+    }
+  }]);
+
+  return EventProxy;
+}();
+
+module.exports = EventProxy;
+
+/***/ }),
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -940,33 +998,45 @@ module.exports = {
 
 /*
  * @Author: Liu Jing 
- * @Date: 2017-10-18 11:20:05 
+ * @Date: 2017-10-20 09:35:47 
  * @Last Modified by:   Liu Jing 
- * @Last Modified time: 2017-10-18 11:20:05 
+ * @Last Modified time: 2017-10-20 09:35:47 
  */
-function EventProxy() {
-  this.event = {};
-};
-EventProxy.prototype = {
-  fire: function fire(evt, data) {
-    var event = this.event[evt];
-    if (!event) return;
-    event.cbs.forEach(function (cb) {
-      cb(data);
+module.exports = function () {
+  if (typeof Object.assign != 'function') {
+    // Must be writable: true, enumerable: false, configurable: true
+    Object.defineProperty(Object, "assign", {
+      value: function assign(target, varArgs) {
+        // .length of function is 2
+        'use strict';
+
+        if (target == null) {
+          // TypeError if undefined or null
+          throw new TypeError('Cannot convert undefined or null to object');
+        }
+
+        var to = Object(target);
+
+        for (var index = 1; index < arguments.length; index++) {
+          var nextSource = arguments[index];
+
+          if (nextSource != null) {
+            // Skip over if undefined or null
+            for (var nextKey in nextSource) {
+              // Avoid bugs when hasOwnProperty is shadowed
+              if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                to[nextKey] = nextSource[nextKey];
+              }
+            }
+          }
+        }
+        return to;
+      },
+      writable: true,
+      configurable: true
     });
-  },
-  on: function on(evt, cb) {
-    if (this.event[evt]) {
-      this.event[evt].cbs.push(cb);
-    } else {
-      this.event[evt] = {
-        evt: evt,
-        cbs: [cb]
-      };
-    }
   }
 };
-module.exports = EventProxy;
 
 /***/ })
 /******/ ]);

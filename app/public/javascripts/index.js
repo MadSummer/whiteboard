@@ -13,7 +13,7 @@ $(document).ready(function () {
     },
     width: 892,
     height: 1263,
-    wrap: 'body'
+    wrap: '#canvas-scroll-wp'
   });
   wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');
   wb.ep.on('mousedown', function () {
@@ -58,11 +58,13 @@ $(document).ready(function () {
         data.path = target.path.join(' ').replace(/,/g, ' ');
         data.height = target.height;
         data.top = target.top;
+        data.oCoords = target.oCoords
         data.left = target.left;
         break;
       default:
         break;
     }
+
     sync({
       action: 'add',
       data: data

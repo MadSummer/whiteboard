@@ -1,5 +1,5 @@
 const http = require('http');
-const allObject = {};
+let allObject = {};
 let server = http.createServer(function (req, res) {
   res.writeHead(200, {
     'Content-type': 'text/html'

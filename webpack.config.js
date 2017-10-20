@@ -1,7 +1,7 @@
 const path = require('path');
 const config = require('./config');
 module.exports = {
-  entry: './src/canvas.js',
+  entry: [ /*'babel-polyfill',*/ './src/canvas.js'],
   watch: true,
   module: {
     rules: [{
@@ -10,8 +10,15 @@ module.exports = {
       use: {
         loader: 'babel-loader',
         options: {
-          presets: ["es2015"],
-          plugins: ["transform-class-properties"]
+          presets: [
+            ['env', {
+              targets: {
+                browsers: ['IE >= 9', 'Android >= 4.4','iOS >= 9']
+              },
+              debug:true
+            }]
+          ],
+          plugins: ['transform-class-properties']
         }
       }
     }]
@@ -19,7 +26,7 @@ module.exports = {
   output: {
     path: path.join(__dirname, '/app/dist/'),
     filename: 'whiteboard.js',
-    publicPath:path.join(__dirname, '/app/dist/')
+    publicPath: path.join(__dirname, '/app/dist/')
   },
   devServer: {
     open: true,
@@ -34,6 +41,6 @@ module.exports = {
     publicPath: './app/public/',
     compress: false,
     port: config.port,
-    publicPath:path.join(__dirname, '/app/dist/')
+    publicPath: path.join(__dirname, '/app/dist/')
   }
 }
