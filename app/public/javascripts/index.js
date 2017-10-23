@@ -153,7 +153,7 @@ $(document).ready(function () {
   // 
   //
   // 监听 
-  var socket = io.connect( window.location.hostname + ':4000');
+  var socket = io.connect( window.location.hostname + ':4008');
   socket.on('server', function (msg) {
     switch (msg.action) {
       case 'add':
