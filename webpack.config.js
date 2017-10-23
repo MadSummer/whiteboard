@@ -1,7 +1,7 @@
 const path = require('path');
 const config = require('./config');
 module.exports = {
-  entry: [ /*'babel-polyfill',*/ './src/canvas.js'],
+  entry: [ /*'babel-polyfill',*/ './src/whiteboard.js'],
   watch: true,
   module: {
     rules: [{

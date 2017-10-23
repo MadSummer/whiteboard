@@ -15,7 +15,8 @@ $(document).ready(function () {
     width: 892,
     height: 1263,
     maxSize:8192,
-    wrap: '#canvas-scroll-wp'
+    wrap: '#canvas-scroll-wp',
+    allowDrawing:true
   });
   wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');
   wb.ep.on('mousedown', function () {
@@ -28,6 +29,7 @@ $(document).ready(function () {
     //console.log('mouse:move')
   });
   wb.ep.on('objectAdded', function (obj) {
+    //console.log('object:added')
     var target = obj.target;
     if (target.from == 'out') return;
     var data = {

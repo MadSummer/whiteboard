@@ -87,13 +87,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-20 18:11:42
+ * @Last Modified time: 2017-10-23 14:38:50
  */
 /*@const require*/
 var version = __webpack_require__(2);
 var cursor = __webpack_require__(3);
 var ep = __webpack_require__(4);
 var polyfill = __webpack_require__(5);
+var Logger = __webpack_require__(6);
 
 /*@const default var*/
 var DEFAULT_CONFIG = {
@@ -104,8 +105,12 @@ var DEFAULT_CONFIG = {
   type: 'path', // default draw type
   fontSize: 16, // fon size
   strokeWidth: 2, // stroke line width
-  strokeColor: 'red', // stroke line color
+  stroke: 'red', // stroke line color
   fillColor: '', //  fill color
+  allowDrawing: true, // allow drawing
+  selectable: false, // object can select, ensure this value is false at this version
+  strokeLineCap: 'round', // line cap
+  strokeLineJoin: 'round', // line join
   generateID: function generateID() {
     // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
@@ -184,11 +189,11 @@ var WhiteBoard = function () {
     key: '_init',
     value: function _init(o) {
 
-      if (!(o instanceof Object)) return console.error('param error');
+      if (!(o instanceof Object)) return this.log.error('param error');
 
       var container = doc.getElementById(o.id);
 
-      if (!container) return console.error('can\'t find the element which id is' + o.id);
+      if (!container) return this.log.error('can\'t find the element which id is' + o.id);
 
       this.originalWidth = o.width;
 
@@ -222,8 +227,7 @@ var WhiteBoard = function () {
         selection: false
         //perPixelTargetFind:false 
       });
-
-      //fabric.Object.prototype.selectable = false;
+      fabric.Object.prototype.selectable = this._setting.selectable;
 
       this.ctx = this.canvas.upperCanvasEl.getContext('2d');
 
@@ -337,7 +341,7 @@ var WhiteBoard = function () {
           if (value > this._setting.maxSize) return false;
           this.canvas.setHeight(value);
           break;
-        case 'strokeColor':
+        case 'stroke':
           this.canvas.freeDrawingBrush.color = value;
           break;
         case 'type':
@@ -346,9 +350,7 @@ var WhiteBoard = function () {
 
           this.canvas.hoverCursor = 'default';
 
-          this.canvas.selectable = false;
-
-          if (value === ALL_TYPE.path) {
+          if (value === ALL_TYPE.path && this.allowDrawing === true) {
             this.canvas.isDrawingMode = true;
           }
 
@@ -378,6 +380,12 @@ var WhiteBoard = function () {
           } else {
             return false;
           }
+          break;
+        case 'allowDrawing':
+          this.canvas.isDrawingMode = !!value;
+          break;
+        case 'selectable':
+          fabric.Object.prototype.selectable = !!value;
           break;
         default:
           break;
@@ -424,7 +432,7 @@ var WhiteBoard = function () {
             stroke: o.stroke,
             strokeWidth: o.strokeWidth,
             radius: 90,
-            strokeLineCap: 'round',
+            strokeLineCap: this.storkeLineCap,
             id: o.id
           });
           break;
@@ -446,7 +454,7 @@ var WhiteBoard = function () {
             top: o.top,
             left: o.left,
             stroke: o.stroke,
-            strokeLineJoin: 'round',
+            strokeLineJoin: this.strokeLineJoin,
             strokeWidth: o.strokeWidth,
             fill: o.fillColor,
             id: o.id
@@ -457,7 +465,7 @@ var WhiteBoard = function () {
             stroke: o.stroke,
             strokeWidth: o.strokeWidth,
             fill: o.fill,
-            strokeLineCap: 'round',
+            strokeLineCap: this.strokeLineCap,
             oCoords: o.oCoords,
             id: o.id
           });
@@ -466,20 +474,85 @@ var WhiteBoard = function () {
       }
     }
     /**
-     * @private
-     * 绘制成对象渲染
+     * render when mouse:move
+     * 
+     * @memberof WhiteBoard
      */
 
   }, {
-    key: '_render',
-    value: function _render() {
+    key: '_renderWhenMouseMove',
+    value: function _renderWhenMouseMove() {
+
+      if (!this._setting.allowDrawing) return;
+
       var type = this.type;
+
+      if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type) return;
+
+      var ratio = this.ratio;
+      var startX = this.startX * ratio;
+      var startY = this.startY * ratio;
+      var endX = this.endX * ratio;
+      var endY = this.endY * ratio;
+      // if start point and end point is nearly,do nothing
+      if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
+
+      var fillColor = this.fillColor;
+      var strokeWidth = this.strokeWidth;
+      var stroke = this.stroke;
+      var isMouseDown = this.isMouseDown;
+      var ctx = this.ctx;
+
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      ctx.strokeStyle = stroke;
+      //原生api
+      ctx.lineWidth = strokeWidth * this.ratio;
+      ctx.lineCap = this.storkeLineCap;
+      ctx.lineJoin = this.stokeLineJoin;
+      ctx.beginPath();
+
+      switch (type) {
+        case ALL_TYPE.line:
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          break;
+        case ALL_TYPE.circle:
+          var radius = Math.sqrt(Math.pow(startX - endX, 2) + Math.pow(startY - endY, 2));
+          ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+          break;
+        case ALL_TYPE.rect:
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.lineTo(startX, endY);
+          ctx.lineTo(startX, startY);
+        default:
+          break;
+      }
+      ctx.stroke();
+    }
+    /**
+     * render when mouse:up
+     * 
+     * @memberof WhiteBoard
+     */
+
+  }, {
+    key: '_renderWhenMouseUp',
+    value: function _renderWhenMouseUp() {
+      var _o;
+
+      if (!this._setting.allowDrawing) return;
+
+      var type = this.type;
+
       if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type) return;
+
       var startX = this.startX;
       var startY = this.startY;
       var endX = this.endX;
       var endY = this.endY;
-      //这里做个判断，如果起点与终点均过于小则不添加
+      //if start pointer and ent pointer nearly , don't add it
       if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
 
       var fillColor = this.fillColor;
@@ -488,93 +561,56 @@ var WhiteBoard = function () {
       var isMouseDown = this.isMouseDown;
       var ctx = this.ctx;
       var ratio = this.ratio;
-      // mousemove _render at upperCanvasEl with temp 
-      if (isMouseDown) {
-        if (ALL_TYPE.path === type) return;
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        ctx.strokeStyle = stroke;
-        //原生api
-        ctx.lineWidth = strokeWidth * this.ratio;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-
-        switch (type) {
-          case ALL_TYPE.line:
-            ctx.moveTo(startX * ratio, startY * ratio);
-            ctx.lineTo(endX * ratio, endY * ratio);
-            break;
-          case ALL_TYPE.circle:
-            var radius = Math.sqrt(Math.pow(startX * ratio - endX * ratio, 2) + Math.pow(startY * ratio - endY * ratio, 2));
-            ctx.arc(startX * ratio, startY * ratio, radius, 0, 2 * Math.PI);
-            break;
-          case ALL_TYPE.rect:
-            ctx.moveTo(startX * ratio, startY * ratio);
-            ctx.lineTo(endX * ratio, startY * ratio);
-            ctx.lineTo(endX * ratio, endY * ratio);
-            ctx.lineTo(startX * ratio, endY * ratio);
-            ctx.lineTo(startX * ratio, startY * ratio);
-          default:
-            break;
-        }
-        ctx.stroke();
-      }
-
       // mouseup _render at lowerCanvasEl with obj
-      else {
-          var _o;
+      ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      // 创建一个空对象
+      var object = null;
+      //如果是path，对象直接生成，返回这个path
+      if (type === ALL_TYPE.path) {
+        return this.canvas.getLastItem();
+      }
+      // 定义绘制对象的通用属性
+      var o = (_o = {
+        type: type,
+        stroke: stroke,
+        strokeWidth: strokeWidth,
+        strokeLineCap: this.strokeLineCap
+      }, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _defineProperty(_o, 'id', this.generateID()), _o);
+      // 根据type不同(line || circle  || arc)给o增加属性
 
-          // 鼠标up，清空上层
-          ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          // 创建一个空对象
-          var object = null;
-          //如果是path，对象直接生成，返回这个path
-          if (type === ALL_TYPE.path) {
-            return this.canvas.getLastItem();
-          }
-          // 定义绘制对象的通用属性
-          var o = (_o = {
-            type: type,
-            stroke: stroke,
-            strokeWidth: strokeWidth,
-            strokeLineCap: 'round'
-          }, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _defineProperty(_o, 'id', this.generateID()), _o);
-          // 根据type不同(line || circle  || arc)给o增加属性
+      switch (type) {
+        case ALL_TYPE.line:
+          o.x1 = startX - strokeWidth / 2;
+          o.y1 = startY - strokeWidth / 2;
+          o.x2 = endX - strokeWidth / 2;
+          o.y2 = endY - strokeWidth / 2;
+          break;
+        case ALL_TYPE.circle:
+          var radius = Math.sqrt(Math.pow(startX - endX, 2) + Math.pow(startY - endY, 2));
+          o.top = startY - radius - strokeWidth / 2;
+          o.left = startX - radius - strokeWidth / 2;
+          o.radius = radius;
+          break;
+        case ALL_TYPE.rect:
+          o.width = Math.abs(endX - startX);
+          o.height = Math.abs(endY - startY);
+          o.top = startY <= endY ? startY - strokeWidth / 2 : endY - strokeWidth / 2;
+          o.left = startX <= endX ? startX - strokeWidth / 2 : endX - strokeWidth / 2;
+          o.strokeLineJoin = this.strokeLineJoin;
+          o.strokeWidth = strokeWidth;
+          break;
+        default:
+          break;
+      }
+      //绘制对象，将对象返回
+      object = this._createObject(o);
 
-          switch (type) {
-            case ALL_TYPE.line:
-              o.x1 = startX - strokeWidth / 2;
-              o.y1 = startY - strokeWidth / 2;
-              o.x2 = endX - strokeWidth / 2;
-              o.y2 = endY - strokeWidth / 2;
-              break;
-            case ALL_TYPE.circle:
-              var _radius = Math.sqrt(Math.pow(startX - endX, 2) + Math.pow(startY - endY, 2));
-              o.top = startY - _radius - strokeWidth / 2;
-              o.left = startX - _radius - strokeWidth / 2;
-              o.radius = _radius;
-              break;
-            case ALL_TYPE.rect:
-              o.width = Math.abs(endX - startX);
-              o.height = Math.abs(endY - startY);
-              o.top = startY <= endY ? startY - strokeWidth / 2 : endY - strokeWidth / 2;
-              o.left = startX <= endX ? startX - strokeWidth / 2 : endX - strokeWidth / 2;
-              o.strokeLineJoin = 'round';
-              o.strokeWidth = strokeWidth;
-              break;
-            default:
-              break;
-          }
-          //绘制对象，将对象返回
-          object = this._createObject(o);
+      //表明对象来源
+      object.from = ALL_FROM.draw;
+      // 添加到fabric canvas中
+      this.canvas.add(object);
 
-          //表明对象来源
-          object.from = ALL_FROM.draw;
-          // 添加到fabric canvas中
-          this.canvas.add(object);
-
-          return object;
-        }
+      return object;
     }
     /**
      * 需要的时候向撤销操作中追加动作
@@ -597,13 +633,13 @@ var WhiteBoard = function () {
   }, {
     key: 'undo',
     value: function undo() {
-      //撤销list为0 返回
+      // if list length is 0 ,return 
       if (this.undoList.length === 0) return;
-      //得到当前撤销操作的对象
+      // get the undo 
       var undo = this.undoList[this.undoList.length - 1];
-      //如果惭怍没有target 返回，同时pop
+      // if there is no target ,pop this and return
       if (!undo.target) return this.undoList.pop();
-      //更改对象来源
+      // change object from prop
       undo.target.from = ALL_FROM.undo;
       switch (undo.action) {
         case All_EVT['object:added']:
@@ -656,10 +692,6 @@ var WhiteBoard = function () {
     value: function render(opt) {
 
       var object = this._createObject(opt);
-
-      //    let ratio = 
-
-      // 表明对象来源为外界（非绘制，非undo）
 
       if (object) {
         object.from = ALL_FROM.out;
@@ -716,24 +748,31 @@ var WhiteBoard = function () {
 
     /**
      * 
-     * 暴露删除接口
-     * @param {Object} opt
-     * opt.id 删除对象的id
+     * 
+     * @param {Object} object
+     * fabric object or whit prop id
+     * @param {string} object.id
+     * fabric object's id
      */
 
   }, {
     key: 'remove',
-    value: function remove(opt) {
-      var object = this.canvas.getItemById(opt.id);
-      if (object) {
-        object.from = ALL_FROM.out;
+    value: function remove(object) {
+      if (typeof object.remove == 'function') {
         object.remove();
+      }
+      if (object.id) {
+        var o = this.canvas.getItemById(object.id);
+        if (o) {
+          o.from = ALL_FROM.out;
+          o.remove();
+        }
       }
     }
 
     /**
      * @param {String} url
-     * 图片url地址
+     * the url of the background image
      */
 
   }, {
@@ -748,13 +787,26 @@ var WhiteBoard = function () {
     }
     /**
      * @param {Number} ratio
-     * 缩放比例
+     * resize number
      */
 
   }, {
     key: 'resize',
     value: function resize(ratio) {
       return this.set('ratio', ratio);
+    }
+  }, {
+    key: 'setDebugMode',
+
+
+    /**
+     * 
+     * set debug mode
+     * @param {boolean} debugMode 
+     * @memberof WhiteBoard
+     */
+    value: function setDebugMode(debugMode) {
+      this.log.setMode(debugMode);
     }
   }]);
 
@@ -768,79 +820,64 @@ var _initialiseProps = function _initialiseProps() {
 
     mousedown: function mousedown(opt) {
       // `this` is a instance of WhiteBoard ,use apply bind runtime context
-      // 设置起点
-      var wrap = document.querySelector(this.wrap);
+      // set start pointer
       var pointer = this.canvas.getPointer(opt.e);
       this.set({
         startX: pointer.x,
         startY: pointer.y,
         isMouseDown: true
       });
-      // 如果是橡皮，则删除
-      if (this.type === ALL_TYPE.eraser) {
+      // if eraser, remove object
+      if (this.type === ALL_TYPE.eraser && opt.target) {
         opt.target && opt.target.remove();
+        opt.target.from = ALL_FROM.draw;
       }
-      // 触发mouse:down 事件
+      // fire mouse:down
       this.ep.fire(All_EVT['mouse:down'], {
         object: opt.target
       });
     },
     mouseup: function mouseup(opt) {
-      //设置终点
-      var wrap = document.querySelector(this.wrap);
-
+      //set end point
       var pointer = this.canvas.getPointer(opt.e);
-
       this.set({
         endX: pointer.x,
         endY: pointer.y,
         isMouseDown: false
       });
-
-      // 绘制
-      this._render();
-      //触发 mouse:up 事件
+      // render current
+      this._renderWhenMouseUp();
+      //fire mouse:up 
       this.ep.fire(All_EVT['mouse:up'], {
         object: opt.target
       });
     },
     mousemove: function mousemove(opt) {
-      // 如果不是鼠标点下则返回
+      // if is not mousedown, do nothing
       if (!this.isMouseDown) return;
-      // 设置终点
-      var wrap = document.querySelector(this.wrap);
-      //解决出界的效果 暂时屏蔽
-      // endX > this.width ? endX = this.width : endX = endX;
-      // endY > this.height ? endY = this.height : endY = endY;
-      //设置当前参数
+      // set end point
       var pointer = this.canvas.getPointer(opt.e);
       this.set({
         endX: pointer.x,
         endY: pointer.y
       });
-      // 绘制
-      this._render();
-      // 触发 mouse:move事件
+      // render
+      this._renderWhenMouseMove();
+      // fire mouse:move
       this.ep.fire(All_EVT['mouse:move'], {
         object: opt.target
       });
     },
     mouseover: function mouseover() {
-      //触发mouse:over事件
+      //fire mouse:over
       this.ep.fire(All_EVT['mouse:over']);
     },
     mouseout: function mouseout() {
-      // 触发mouse:out事件
+      // fire mouse:out
       this.ep.fire('mouse:out');
     },
     pathCreated: function pathCreated(o) {
-      // 因为object:added再mouseup之前，需要再此设置
-      /*if (!('id' in o)) {
-        o.id = this.generateID();
-      }
-      if (!('from' in o)) {
-        o.from = ALL_FROM.draw;
-      }*/
+      //TODO:
     },
     objectAdded: function objectAdded(o) {
       // 因为freeDrawing的object:added再mouseup之前，需要再此设置
@@ -885,6 +922,7 @@ var _initialiseProps = function _initialiseProps() {
       this.ep.fire(All_EVT['clear'], o);
     } };
   this.ep = new ep();
+  this.log = new Logger(true);
 };
 
 global.WhiteBoard = WhiteBoard;
@@ -1047,6 +1085,73 @@ module.exports = function () {
     });
   }
 };
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/*
+ * @Author: Liu Jing 
+ * @Date: 2017-10-23 10:06:02 
+ * @Last Modified by: Liu Jing
+ * @Last Modified time: 2017-10-23 10:08:33
+ */
+module.exports = function () {
+  function Logger() {
+    var debug = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
+    _classCallCheck(this, Logger);
+
+    this.debugMode = debug;
+  }
+
+  _createClass(Logger, [{
+    key: "debug",
+    value: function debug() {
+      if (!this.debugMode) return;
+      console.debug.apply(console, arguments);
+    }
+  }, {
+    key: "error",
+    value: function error() {
+      if (!this.debugMode) return;
+      if (!this.debugMode) return;
+      console.error.apply(console, arguments);
+    }
+  }, {
+    key: "info",
+    value: function info() {
+      if (!this.debugMode) return;
+      console.info.apply(console, arguments);
+    }
+  }, {
+    key: "log",
+    value: function log() {
+      if (!this.debugMode) return;
+      console.log.apply(console, arguments);
+    }
+    /**
+     * 
+     * set debug mode
+     * @param {boolean} debugMode 
+     */
+
+  }, {
+    key: "setMode",
+    value: function setMode(debugMode) {
+      this.debugMode = !!debugMode;
+    }
+  }]);
+
+  return Logger;
+}();
 
 /***/ })
 /******/ ]);
