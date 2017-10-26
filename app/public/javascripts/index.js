@@ -32,43 +32,7 @@ $(document).ready(function () {
     //console.log('object:added')
     var target = obj.target;
     if (target.from == 'out') return;
-    var data = {
-      stroke: target.stroke,
-      fill: target.fill,
-      strokeWidth: target.strokeWidth,
-      id: target.id,
-      type: target.type,
-      from: target.from
-    }
-    switch (target.type) {
-      case 'line':
-        data.x1 = target.x1;
-        data.x2 = target.x2;
-        data.y1 = target.y1;
-        data.y2 = target.y2;
-        break;
-      case 'circle':
-        data.top = target.top;
-        data.left = target.left;
-        data.radius = target.radius;
-        break;
-      case 'rect':
-        data.width = target.width;
-        data.height = target.height;
-        data.top = target.top;
-        data.left = target.left;
-        break;
-      case 'path':
-        data.path = target.path.join(' ').replace(/,/g, ' ');
-        data.height = target.height;
-        data.top = target.top;
-        data.oCoords = target.oCoords
-        data.left = target.left;
-        break;
-      default:
-        break;
-    }
-
+    var data = target.exportKeyAttr();
     sync({
       action: 'add',
       data: data

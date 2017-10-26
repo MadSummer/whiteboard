@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-23 14:38:50
+ * @Last Modified time: 2017-10-26 12:01:11
  */
 /*@const require*/
 var version = __webpack_require__(2);
@@ -227,7 +227,47 @@ var WhiteBoard = function () {
         selection: false
         //perPixelTargetFind:false 
       });
+
       fabric.Object.prototype.selectable = this._setting.selectable;
+
+      fabric.Object.prototype.exportKeyAttr = function () {
+        var data = {
+          stroke: this.stroke,
+          fill: this.fill,
+          strokeWidth: this.strokeWidth,
+          id: this.id,
+          type: this.type,
+          from: this.from
+        };
+        switch (this.type) {
+          case 'line':
+            data.x1 = this.x1;
+            data.x2 = this.x2;
+            data.y1 = this.y1;
+            data.y2 = this.y2;
+            break;
+          case 'circle':
+            data.top = this.top;
+            data.left = this.left;
+            data.radius = this.radius;
+            break;
+          case 'rect':
+            data.width = this.width;
+            data.height = this.height;
+            data.top = this.top;
+            data.left = this.left;
+            break;
+          case 'path':
+            data.path = this.path.join(' ').replace(/,/g, ' ');
+            data.height = this.height;
+            data.top = this.top;
+            data.left = this.left;
+            break;
+          default:
+            break;
+        }
+        return data;
+      };
 
       this.ctx = this.canvas.upperCanvasEl.getContext('2d');
 
@@ -466,7 +506,6 @@ var WhiteBoard = function () {
             strokeWidth: o.strokeWidth,
             fill: o.fill,
             strokeLineCap: this.strokeLineCap,
-            oCoords: o.oCoords,
             id: o.id
           });
         default:
