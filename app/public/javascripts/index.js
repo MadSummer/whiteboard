@@ -1,11 +1,9 @@
-//draw.init('canvas', 'whiteboard');
-var draw;
 $(document).ready(function () {
   var width = parseInt($('#whiteboard').css('width'));
   var height = parseInt($('#whiteboard').css('height')) || 600;
   $('#whiteboard').attr('width', width);
   $('#whiteboard').attr('height', height);
-  wb = new WhiteBoard({
+  window.wb = new WhiteBoard({
     ratio:.5,
     id: 'whiteboard',
     stroke: 'red', 

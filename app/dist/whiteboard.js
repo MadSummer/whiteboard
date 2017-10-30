@@ -77,7 +77,7 @@ module.exports = __webpack_require__(1);
 "use strict";
 
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+  var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-26 12:01:11
+ * @Last Modified time: 2017-10-26 15:46:15
  */
 /*@const require*/
 var version = __webpack_require__(2);
@@ -95,7 +95,6 @@ var cursor = __webpack_require__(3);
 var ep = __webpack_require__(4);
 var polyfill = __webpack_require__(5);
 var Logger = __webpack_require__(6);
-
 /*@const default var*/
 var DEFAULT_CONFIG = {
   width: 500, //canvas width
@@ -117,7 +116,6 @@ var DEFAULT_CONFIG = {
   },
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 };
-
 var global = window;
 var doc = document;
 
@@ -279,11 +277,8 @@ var WhiteBoard = function () {
        * fabric object or null
        */
       fabric.Canvas.prototype.getItemById = function (id) {
-
         var object = null;
-
         var objects = this.getObjects();
-
         for (var i = 0; i < this.size(); i++) {
           if (objects[i]['id'] && objects[i]['id'] === id) {
             object = objects[i];
@@ -311,19 +306,11 @@ var WhiteBoard = function () {
        * 是否删除背景图
        */
       fabric.Canvas.prototype.removeAllObjects = function (obj) {
-
         var objects = this.getObjects().slice();
-
-        try {
-          this.fire('allObjects:removed', obj);
-        } catch (error) {}
-
+        this.fire('allObjects:removed', obj);
         var backgroundImage = this.backgroundImage;
-
         this.clear();
-
         if (!obj.removeBg && backgroundImage) {
-
           this.setBackgroundImage(backgroundImage, this.renderAll.bind(this));
         }
       };
@@ -770,9 +757,10 @@ var WhiteBoard = function () {
 
     /**
      * 
-     * 暴露clear接口
-     * @param {Object} o
-     * opt.removeBg 是否移除背景图
+     * clear the canvas instance
+     * @param {object} o
+     * @param {boolean} o.removeBg
+     * remove the backgroundImage
      * 
      */
 
@@ -846,6 +834,26 @@ var WhiteBoard = function () {
      */
     value: function setDebugMode(debugMode) {
       this.log.setMode(debugMode);
+    }
+    /**
+     * 
+     * 
+     * @param {object} obj 
+     * new setting param
+     * @memberof WhiteBoard
+     */
+
+  }, {
+    key: 'reset',
+    value: function reset(obj) {
+      this.clear({
+        removeBg: true
+      });
+      if (obj instanceof Object) {
+        this.originalHeight = obj.height;
+        this.originalWidth = obj.width;
+        this.set(obj);
+      }
     }
   }]);
 

@@ -2,7 +2,7 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-26 14:39:51
+ * @Last Modified time: 2017-10-26 15:46:15
  */
 /*@const require*/
 const version = require('./version');
@@ -181,11 +181,8 @@ class WhiteBoard {
      * fabric object or null
      */
     fabric.Canvas.prototype.getItemById = function (id) {
-
       let object = null;
-
       let objects = this.getObjects();
-
       for (let i = 0; i < this.size(); i++) {
         if (objects[i]['id'] && objects[i]['id'] === id) {
           object = objects[i];
@@ -214,23 +211,12 @@ class WhiteBoard {
      * 是否删除背景图
      */
     fabric.Canvas.prototype.removeAllObjects = function (obj) {
-
       let objects = this.getObjects().slice();
-
-      try {
-        this.fire('allObjects:removed', obj);
-      } catch (error) {
-
-      }
-
+      this.fire('allObjects:removed', obj);
       let backgroundImage = this.backgroundImage;
-
       this.clear();
-
       if (!obj.removeBg && backgroundImage) {
-
         this.setBackgroundImage(backgroundImage, this.renderAll.bind(this));
-
       }
     };
   }
@@ -742,9 +728,10 @@ class WhiteBoard {
 
   /**
    * 
-   * 暴露clear接口
-   * @param {Object} o
-   * opt.removeBg 是否移除背景图
+   * clear the canvas instance
+   * @param {object} o
+   * @param {boolean} o.removeBg
+   * remove the backgroundImage
    * 
    */
   clear(o) {
@@ -809,7 +796,23 @@ class WhiteBoard {
   setDebugMode(debugMode) {
     this.log.setMode(debugMode)
   }
-  
+  /**
+   * 
+   * 
+   * @param {object} obj 
+   * new setting param
+   * @memberof WhiteBoard
+   */
+  reset(obj) {
+    this.clear({
+      removeBg: true
+    });
+    if (obj instanceof Object) {
+      this.originalHeight = obj.height;
+      this.originalWidth = obj.width;
+      this.set(obj);
+    }
+  }
 }
 
 global.WhiteBoard = WhiteBoard;
