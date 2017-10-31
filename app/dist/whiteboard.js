@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-31 11:04:14
+ * @Last Modified time: 2017-10-31 14:26:32
  */
 /*@const require*/
 var version = __webpack_require__(2);

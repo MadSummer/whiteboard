@@ -1,16 +1,15 @@
-/*
- * @Author: Liu Jing 
+/**
+ * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-31 11:04:14
+ * @Last Modified time: 2017-10-31 16:35:40
  */
-/*@const require*/
 const version = require('./version');
 const cursor = require('./cursor');
 const ep = require('./eventproxy');
 const polyfill = require('./polyfill');
 const Logger = require('./log');
-/*@const default var*/
+/** @const default var*/
 const DEFAULT_CONFIG = {
   width: 500, //canvas width
   height: 375, // canvas height
@@ -30,7 +29,13 @@ const DEFAULT_CONFIG = {
   },
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 }
+/**
+ * @type {Window}
+ */
 const global = window;
+/**
+ * @type {Document}
+ */
 const doc = document;
 
 const ALL_TYPE = {
@@ -68,17 +73,13 @@ class WhiteBoard {
    * @memberof WhiteBoard
    */
   constructor(o) {
-
     this._setting = Object.assign(DEFAULT_CONFIG, o);
-
     this.undoList = [];
-
     this.redoList = [];
-
     this._init(o);
-
   }
   /**  
+   * @private
    * @param {Object} o
    * @param {string} o.id
    * container element id
@@ -93,7 +94,7 @@ class WhiteBoard {
    * @memberof WhiteBoard
    */
   _init(o) {
-    
+
     if (!(o instanceof Object)) return this.log.error('param error');
 
     let container = doc.getElementById(o.id);
@@ -131,7 +132,11 @@ class WhiteBoard {
     });
 
     fabric.Object.prototype.selectable = this._setting.selectable;
-
+    /**
+     * 
+     * return the key prop of the fabric object
+     * @returns  {Object}
+     */
     fabric.Object.prototype.exportKeyAttr = function () {
       var data = {
         stroke: this.stroke,
@@ -194,8 +199,7 @@ class WhiteBoard {
 
     /**
      * get the last item object
-     * 
-     * @returns 
+     * @returns {Object}
      */
     fabric.Canvas.prototype.getLastItem = function () {
 
@@ -315,7 +319,6 @@ class WhiteBoard {
   eventHandler = {
 
     //all event callback
-
     mousedown: function (opt) {
       // `this` is a instance of WhiteBoard ,use apply bind runtime context
       // set start pointer
@@ -439,7 +442,7 @@ class WhiteBoard {
    * 
    * 
    * @param {object} o 
-   * @returns 
+   * @returns {Object}
    * @memberof WhiteBoard
    */
   _createObject(o) {
@@ -816,5 +819,4 @@ class WhiteBoard {
 }
 
 global.WhiteBoard = WhiteBoard;
-
 module.exports = WhiteBoard;
