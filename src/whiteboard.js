@@ -2,7 +2,7 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-26 15:46:15
+ * @Last Modified time: 2017-10-31 11:04:14
  */
 /*@const require*/
 const version = require('./version');
@@ -110,7 +110,7 @@ class WhiteBoard {
     // register event handler  
     this._registerEventListener();
 
-    // 设置setting的getter和setter  
+    // getter and setter  
     this._defineSetter();
   }
 
