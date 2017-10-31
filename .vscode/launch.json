@@ -5,10 +5,24 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "chrome",
+      "request": "attach",
+      "name": "Attach to Chrome",
+      "port": 9222,
+      "webRoot":"/"// "${workspaceRoot}"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch Chrome",
+      "url": "http://192.168.1.38:3000/",
+      "webRoot": "${workspaceRoot}"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "启动程序",
-      "program": "${workspaceRoot}\\app.js",
+      "program": "${workspaceRoot}\\app\\index.html",
       "cwd": "${workspaceRoot}"
     },
     {

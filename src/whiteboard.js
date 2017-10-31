@@ -2,7 +2,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-31 16:35:40
+ * @Last Modified time: 2017-10-31 18:17:01
  */
 const version = require('./version');
 const cursor = require('./cursor');
@@ -37,7 +37,6 @@ const global = window;
  * @type {Document}
  */
 const doc = document;
-
 const ALL_TYPE = {
   'path': 'path',
   'circle': 'circle',
@@ -69,8 +68,18 @@ polyfill();
 class WhiteBoard {
   /**
    * Creates an instance of WhiteBoard.
-   * @param {object} o 
-   * @memberof WhiteBoard
+   * @param {Object} o 
+   * init param obejct
+   * @param {string} o.id
+   * container element id
+   * @param {number} o.undoMax
+   * the max limit of undo
+   * @param {number} o.fontSize
+   * the font size
+   * @param {number} o.strokeWidth
+   * the stoke width
+   * @param {string} o.fillColor
+   * the fill color
    */
   constructor(o) {
     this._setting = Object.assign(DEFAULT_CONFIG, o);
@@ -78,7 +87,7 @@ class WhiteBoard {
     this.redoList = [];
     this._init(o);
   }
-  /**  
+  /**
    * @private
    * @param {Object} o
    * @param {string} o.id
@@ -91,7 +100,6 @@ class WhiteBoard {
    * the stoke width
    * @param {string} o.fillColor
    * the fill color
-   * @memberof WhiteBoard
    */
   _init(o) {
 
@@ -116,9 +124,8 @@ class WhiteBoard {
   }
 
   /**
-   * 
    * Create an instance of fabric
-   * @memberof WhiteBoard
+   * @private
    */
   _initFabric() {
 
@@ -226,7 +233,8 @@ class WhiteBoard {
   }
   /**
    * 
-   * define setter and getter
+   * define instance's prop setter and getter
+   * @private
    * @memberof WhiteBoard
    */
   _defineSetter() {
@@ -249,7 +257,7 @@ class WhiteBoard {
   }
   /**
    * 
-   * 
+   * @private
    * @param {string} prop
    * prop
    * @param {string | function} value
@@ -317,8 +325,11 @@ class WhiteBoard {
     return true;
   }
   eventHandler = {
-
-    //all event callback
+    /**
+     * 
+     * @this WhiteBoard
+     * @param {object} opt 
+     */
     mousedown: function (opt) {
       // `this` is a instance of WhiteBoard ,use apply bind runtime context
       // set start pointer
@@ -338,6 +349,11 @@ class WhiteBoard {
         object: opt.target
       });
     },
+    /**
+     * 
+     * 
+     * @param {Object} opt 
+     */
     mouseup: function (opt) {
       //set end point
       let pointer = this.canvas.getPointer(opt.e)
@@ -353,6 +369,12 @@ class WhiteBoard {
         object: opt.target
       });
     },
+    /**
+     * 
+     * 
+     * @param {Object} opt 
+     * @returns {undefined}
+     */
     mousemove: function (opt) {
       // if is not mousedown, do nothing
       if (!this.isMouseDown) return;
@@ -380,6 +402,13 @@ class WhiteBoard {
     pathCreated: function (o) {
       //TODO:
     },
+    /**
+     * 
+     * fired when fabric object added
+     * @this WhiteBoard
+     * @param {Object} o 
+     * event option
+     */
     objectAdded: function (o) {
       // 因为freeDrawing的object:added再mouseup之前，需要再此设置
       if (!('id' in o.target)) {
@@ -400,8 +429,13 @@ class WhiteBoard {
         target: o.target
       });
     },
+    /**
+     * 
+     * fired when fabric object removed
+     * @param {Object} o 
+     * event option
+     */
     objectRemoved: function (o) {
-      // 对象的from属性表示了来自那个操作，某些操作可能不需要触发回调
       if (o.target.from === ALL_FROM.draw) {
         this._pushUndo({
           action: All_EVT['object:removed'],
@@ -425,9 +459,9 @@ class WhiteBoard {
     }
   }
   /**
+   * @private
+   * register events handler
    * 
-   * 
-   * @memberof WhiteBoard
    */
   _registerEventListener() {
     for (let x in All_EVT) {
@@ -439,11 +473,10 @@ class WhiteBoard {
     }
   }
   /**
-   * 
-   * 
-   * @param {object} o 
-   * @returns {Object}
-   * @memberof WhiteBoard
+   * create a fabric object instance
+   * @private
+   * @param {Object} o 
+   * @returns {fabric.Object}
    */
   _createObject(o) {
     switch (o.type) {
@@ -493,18 +526,15 @@ class WhiteBoard {
     }
   }
   /**
-   * render when mouse:move
    * 
-   * @memberof WhiteBoard
+   * render when mousemove
+   * @private
+   * @returns {undefined}
    */
   _renderWhenMouseMove() {
-
     if (!this._setting.allowDrawing) return;
-
     let type = this.type;
-
     if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type) return;
-
     let ratio = this.ratio;
     let startX = this.startX * ratio;
     let startY = this.startY * ratio;
@@ -512,22 +542,17 @@ class WhiteBoard {
     let endY = this.endY * ratio;
     // if start point and end point is nearly,do nothing
     if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
-
     let fillColor = this.fillColor;
     let strokeWidth = this.strokeWidth;
     let stroke = this.stroke;
     let isMouseDown = this.isMouseDown;
     let ctx = this.ctx;
-
-
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.strokeStyle = stroke;
-    //原生api
     ctx.lineWidth = strokeWidth * this.ratio;
     ctx.lineCap = this.storkeLineCap;
     ctx.lineJoin = this.stokeLineJoin;
     ctx.beginPath();
-
     switch (type) {
       case ALL_TYPE.line:
         ctx.moveTo(startX, startY);
@@ -550,23 +575,19 @@ class WhiteBoard {
   }
   /**
    * render when mouse:up
-   * 
-   * @memberof WhiteBoard
+   * @private
+   * @return {undefined | fabric.Object}
    */
   _renderWhenMouseUp() {
     if (!this._setting.allowDrawing) return;
-
     let type = this.type;
-
     if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type) return;
-
     let startX = this.startX;
     let startY = this.startY;
     let endX = this.endX;
     let endY = this.endY;
     //if start pointer and ent pointer nearly , don't add it
     if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
-
     let fillColor = this.fillColor;
     let strokeWidth = this.strokeWidth;
     let stroke = this.stroke;
@@ -575,13 +596,10 @@ class WhiteBoard {
     let ratio = this.ratio;
     // mouseup _render at lowerCanvasEl with obj
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    // 创建一个空对象
     let object = null;
-    //如果是path，对象直接生成，返回这个path
     if (type === ALL_TYPE.path) {
       return this.canvas.getLastItem();
     }
-    // 定义绘制对象的通用属性
     let o = {
       type: type,
       stroke: stroke,
@@ -591,7 +609,6 @@ class WhiteBoard {
       fillColor: fillColor,
       id: this.generateID()
     }
-    // 根据type不同(line || circle  || arc)给o增加属性
 
     switch (type) {
       case ALL_TYPE.line:
@@ -617,20 +634,16 @@ class WhiteBoard {
       default:
         break;
     }
-    //绘制对象，将对象返回
     object = this._createObject(o);
-
-    //表明对象来源
     object.from = ALL_FROM.draw;
-    // 添加到fabric canvas中
     this.canvas.add(object);
-
     return object;
   }
   /**
-   * 需要的时候向撤销操作中追加动作
+   * push history to undoList
+   * @private
    * @param {Obejct} o
-   * undo对象
+   * undo history
    */
   _pushUndo(o) {
     if (this.undoList.length >= this.sundoMax) {
@@ -639,7 +652,9 @@ class WhiteBoard {
     this.undoList.push(o);
   }
   /**
-   * 撤销操作
+   * 
+   * undo
+   * @returns {undefined}
    */
   undo() {
     // if list length is 0 ,return 
@@ -665,11 +680,12 @@ class WhiteBoard {
     }
     this.redoList.push(this.undoList.pop())
   }
-
-  /**
-   * 恢复操作
-   */
-  redo() {
+/**
+ * 
+ * redo
+ * @returns {undefined}
+ */
+redo() {
     if (this.redoList.length === 0) return;
     let redo = this.redoList[this.redoList.length - 1];
     redo.target.from = ALL_FROM.undo;
@@ -688,22 +704,20 @@ class WhiteBoard {
   }
   /**
    * 
-   * 暴露绘制接口
+   * export render interface
    * @param {Object} o
-   *绘制object所需要的参数
+   * the object 
    */
   render(opt) {
-
     let object = this._createObject(opt);
-
     if (object) {
       object.from = ALL_FROM.out;
       this.canvas.add(object);
     }
   }
   /**
-   * 暴露setting接口
-   * @param {object} o
+   * export setting interface
+   * @param {Object} o
    * seting object
    * @return {boolean}
    * Indicates whether the settings are successful
@@ -743,10 +757,8 @@ class WhiteBoard {
     this.redoList.length = 0;
     this.canvas.removeAllObjects(o);
   }
-
   /**
-   * 
-   * 
+   * remove fabric object
    * @param {Object} object
    * fabric object or whit prop id
    * @param {string} object.id
@@ -763,11 +775,10 @@ class WhiteBoard {
         o.remove();
       }
     }
-
   }
 
   /**
-   * @param {String} url
+   * @param {string} url
    * the url of the background image
    */
   loadBackgroundImage(url) {
@@ -779,32 +790,29 @@ class WhiteBoard {
     });
   }
   /**
-   * @param {Number} ratio
+   * resize the canvas and all fabrci.Obejct
+   * @param {number} ratio 
    * resize number
+   * @returns {boolean}
    */
   resize(ratio) {
     return this.set('ratio', ratio);
   }
-
   ep = new ep();
-
   log = new Logger(true);
 
   /**
    * 
    * set debug mode
    * @param {boolean} debugMode 
-   * @memberof WhiteBoard
    */
   setDebugMode(debugMode) {
     this.log.setMode(debugMode)
   }
   /**
-   * 
-   * 
-   * @param {object} obj 
+   * clear all fabrci.Obejct and backgroundImage 
+   * @param {Object} obj 
    * new setting param
-   * @memberof WhiteBoard
    */
   reset(obj) {
     this.clear({
@@ -817,6 +825,5 @@ class WhiteBoard {
     }
   }
 }
-
 global.WhiteBoard = WhiteBoard;
 module.exports = WhiteBoard;
