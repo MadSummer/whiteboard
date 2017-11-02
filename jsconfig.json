@@ -4,5 +4,8 @@
       "fabric",
       "jquery"
     ]
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

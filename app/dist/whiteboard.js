@@ -60,18 +60,35 @@
 /******/ 	__webpack_require__.p = "E:\\node\\whiteboard\\app\\dist\\";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(1);
+"use strict";
 
+
+/*
+ * @Author: Liu Jing 
+ * @Date: 2017-10-18 11:19:55 
+ * @Last Modified by:   Liu Jing 
+ * @Last Modified time: 2017-10-18 11:19:55 
+ */
+module.exports = {
+  ver: '2017-10-18'
+};
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(2);
+
+
+/***/ }),
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83,19 +100,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-/*
- * @Author: Liu Jing 
+/**
+ * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-31 14:26:32
+ * @Last Modified time: 2017-11-02 10:14:38
  */
-/*@const require*/
-var version = __webpack_require__(2);
+
+var version = __webpack_require__(0);
 var cursor = __webpack_require__(3);
 var ep = __webpack_require__(4);
 var polyfill = __webpack_require__(5);
 var Logger = __webpack_require__(6);
-/*@const default var*/
 var DEFAULT_CONFIG = {
   width: 500, //canvas width
   height: 375, // canvas height
@@ -116,9 +132,6 @@ var DEFAULT_CONFIG = {
   },
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 };
-var global = window;
-var doc = document;
-
 var ALL_TYPE = {
   'path': 'path',
   'circle': 'circle',
@@ -145,14 +158,32 @@ var ALL_FROM = {
   undo: 'undo', // object from undo,redo
   out: 'out' // object from render
 
-  /* polyfill for some browser */
-};polyfill();
+  /**
+   * @type {Window}
+   */
+};var global = window;
+/**
+ * @type {Document}
+ */
+var doc = document;
+/* polyfill for some browser */
+polyfill();
 
 var WhiteBoard = function () {
   /**
    * Creates an instance of WhiteBoard.
-   * @param {object} o 
-   * @memberof WhiteBoard
+   * @param {Object} o 
+   * init param obejct
+   * @param {string} o.id
+   * container element id
+   * @param {number} o.undoMax
+   * the max limit of undo
+   * @param {number} o.fontSize
+   * the font size
+   * @param {number} o.strokeWidth
+   * the stoke width
+   * @param {string} o.fillColor
+   * the fill color
    */
   function WhiteBoard(o) {
     _classCallCheck(this, WhiteBoard);
@@ -160,14 +191,12 @@ var WhiteBoard = function () {
     _initialiseProps.call(this);
 
     this._setting = Object.assign(DEFAULT_CONFIG, o);
-
     this.undoList = [];
-
     this.redoList = [];
-
     this._init(o);
   }
-  /**  
+  /**
+   * @private
    * @param {Object} o
    * @param {string} o.id
    * container element id
@@ -179,7 +208,6 @@ var WhiteBoard = function () {
    * the stoke width
    * @param {string} o.fillColor
    * the fill color
-   * @memberof WhiteBoard
    */
 
 
@@ -208,9 +236,8 @@ var WhiteBoard = function () {
     }
 
     /**
-     * 
      * Create an instance of fabric
-     * @memberof WhiteBoard
+     * @private
      */
 
   }, {
@@ -227,7 +254,11 @@ var WhiteBoard = function () {
       });
 
       fabric.Object.prototype.selectable = this._setting.selectable;
-
+      /**
+       * 
+       * return the key prop of the fabric object
+       * @returns  {Object}
+       */
       fabric.Object.prototype.exportKeyAttr = function () {
         var data = {
           stroke: this.stroke,
@@ -290,8 +321,7 @@ var WhiteBoard = function () {
 
       /**
        * get the last item object
-       * 
-       * @returns 
+       * @returns {Object}
        */
       fabric.Canvas.prototype.getLastItem = function () {
 
@@ -317,8 +347,8 @@ var WhiteBoard = function () {
     }
     /**
      * 
-     * define setter and getter
-     * @memberof WhiteBoard
+     * define instance's prop setter and getter
+     * @private
      */
 
   }, {
@@ -349,7 +379,7 @@ var WhiteBoard = function () {
     }
     /**
      * 
-     * 
+     * @private
      * @param {string} prop
      * prop
      * @param {string | function} value
@@ -423,9 +453,8 @@ var WhiteBoard = function () {
     key: '_registerEventListener',
 
     /**
-     * 
-     * 
-     * @memberof WhiteBoard
+     * @private
+     * register events handler
      */
     value: function _registerEventListener() {
       var _this2 = this;
@@ -443,11 +472,10 @@ var WhiteBoard = function () {
       }
     }
     /**
-     * 
-     * 
-     * @param {object} o 
-     * @returns 
-     * @memberof WhiteBoard
+     * create a fabric object instance
+     * @private
+     * @param {Object} o 
+     * @returns {fabric.Object}
      */
 
   }, {
@@ -500,21 +528,18 @@ var WhiteBoard = function () {
       }
     }
     /**
-     * render when mouse:move
      * 
-     * @memberof WhiteBoard
+     * render when mousemove
+     * @private
+     * @returns {undefined}
      */
 
   }, {
     key: '_renderWhenMouseMove',
     value: function _renderWhenMouseMove() {
-
       if (!this._setting.allowDrawing) return;
-
       var type = this.type;
-
       if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type) return;
-
       var ratio = this.ratio;
       var startX = this.startX * ratio;
       var startY = this.startY * ratio;
@@ -522,21 +547,17 @@ var WhiteBoard = function () {
       var endY = this.endY * ratio;
       // if start point and end point is nearly,do nothing
       if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
-
       var fillColor = this.fillColor;
       var strokeWidth = this.strokeWidth;
       var stroke = this.stroke;
       var isMouseDown = this.isMouseDown;
       var ctx = this.ctx;
-
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       ctx.strokeStyle = stroke;
-      //原生api
       ctx.lineWidth = strokeWidth * this.ratio;
       ctx.lineCap = this.storkeLineCap;
       ctx.lineJoin = this.stokeLineJoin;
       ctx.beginPath();
-
       switch (type) {
         case ALL_TYPE.line:
           ctx.moveTo(startX, startY);
@@ -559,8 +580,8 @@ var WhiteBoard = function () {
     }
     /**
      * render when mouse:up
-     * 
-     * @memberof WhiteBoard
+     * @private
+     * @return {undefined | fabric.Object}
      */
 
   }, {
@@ -569,18 +590,14 @@ var WhiteBoard = function () {
       var _o;
 
       if (!this._setting.allowDrawing) return;
-
       var type = this.type;
-
       if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type) return;
-
       var startX = this.startX;
       var startY = this.startY;
       var endX = this.endX;
       var endY = this.endY;
       //if start pointer and ent pointer nearly , don't add it
       if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
-
       var fillColor = this.fillColor;
       var strokeWidth = this.strokeWidth;
       var stroke = this.stroke;
@@ -589,20 +606,16 @@ var WhiteBoard = function () {
       var ratio = this.ratio;
       // mouseup _render at lowerCanvasEl with obj
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      // 创建一个空对象
       var object = null;
-      //如果是path，对象直接生成，返回这个path
       if (type === ALL_TYPE.path) {
         return this.canvas.getLastItem();
       }
-      // 定义绘制对象的通用属性
       var o = (_o = {
         type: type,
         stroke: stroke,
         strokeWidth: strokeWidth,
         strokeLineCap: this.strokeLineCap
       }, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _defineProperty(_o, 'id', this.generateID()), _o);
-      // 根据type不同(line || circle  || arc)给o增加属性
 
       switch (type) {
         case ALL_TYPE.line:
@@ -628,20 +641,16 @@ var WhiteBoard = function () {
         default:
           break;
       }
-      //绘制对象，将对象返回
       object = this._createObject(o);
-
-      //表明对象来源
       object.from = ALL_FROM.draw;
-      // 添加到fabric canvas中
       this.canvas.add(object);
-
       return object;
     }
     /**
-     * 需要的时候向撤销操作中追加动作
+     * push history to undoList
+     * @private
      * @param {Obejct} o
-     * undo对象
+     * undo history
      */
 
   }, {
@@ -653,7 +662,9 @@ var WhiteBoard = function () {
       this.undoList.push(o);
     }
     /**
-     * 撤销操作
+     * 
+     * undo
+     * @returns {undefined}
      */
 
   }, {
@@ -682,9 +693,10 @@ var WhiteBoard = function () {
       }
       this.redoList.push(this.undoList.pop());
     }
-
     /**
-     * 恢复操作
+     * 
+     * redo
+     * @returns {undefined}
      */
 
   }, {
@@ -708,25 +720,23 @@ var WhiteBoard = function () {
     }
     /**
      * 
-     * 暴露绘制接口
+     * export render interface
      * @param {Object} o
-     *绘制object所需要的参数
+     * the object 
      */
 
   }, {
     key: 'render',
     value: function render(opt) {
-
       var object = this._createObject(opt);
-
       if (object) {
         object.from = ALL_FROM.out;
         this.canvas.add(object);
       }
     }
     /**
-     * 暴露setting接口
-     * @param {object} o
+     * export setting interface
+     * @param {Object} o
      * seting object
      * @return {boolean}
      * Indicates whether the settings are successful
@@ -772,10 +782,8 @@ var WhiteBoard = function () {
       this.redoList.length = 0;
       this.canvas.removeAllObjects(o);
     }
-
     /**
-     * 
-     * 
+     * remove fabric object
      * @param {Object} object
      * fabric object or whit prop id
      * @param {string} object.id
@@ -798,7 +806,7 @@ var WhiteBoard = function () {
     }
 
     /**
-     * @param {String} url
+     * @param {string} url
      * the url of the background image
      */
 
@@ -813,8 +821,11 @@ var WhiteBoard = function () {
       });
     }
     /**
-     * @param {Number} ratio
+     * resize the canvas and all fabrci.Obejct
+     * @param {number} ratio 
      * resize number
+     * @returns {boolean}
+     * means set success or faild
      */
 
   }, {
@@ -822,6 +833,14 @@ var WhiteBoard = function () {
     value: function resize(ratio) {
       return this.set('ratio', ratio);
     }
+    /**
+     * event proxy
+     */
+
+    /**
+     * logger factory
+     */
+
   }, {
     key: 'setDebugMode',
 
@@ -830,17 +849,14 @@ var WhiteBoard = function () {
      * 
      * set debug mode
      * @param {boolean} debugMode 
-     * @memberof WhiteBoard
      */
     value: function setDebugMode(debugMode) {
       this.log.setMode(debugMode);
     }
     /**
-     * 
-     * 
-     * @param {object} obj 
+     * clear all fabrci.Obejct and backgroundImage 
+     * @param {Object} obj 
      * new setting param
-     * @memberof WhiteBoard
      */
 
   }, {
@@ -862,9 +878,11 @@ var WhiteBoard = function () {
 
 var _initialiseProps = function _initialiseProps() {
   this.eventHandler = {
-
-    //all event callback
-
+    /**
+     * fired when mouse down
+     * @this WhiteBoard
+     * @param {object} opt 
+     */
     mousedown: function mousedown(opt) {
       // `this` is a instance of WhiteBoard ,use apply bind runtime context
       // set start pointer
@@ -884,6 +902,11 @@ var _initialiseProps = function _initialiseProps() {
         object: opt.target
       });
     },
+    /**
+     * fired when mouse up
+     * @this WhiteBoard
+     * @param {Object} opt 
+     */
     mouseup: function mouseup(opt) {
       //set end point
       var pointer = this.canvas.getPointer(opt.e);
@@ -899,6 +922,12 @@ var _initialiseProps = function _initialiseProps() {
         object: opt.target
       });
     },
+    /**
+     * fired when mouse move
+     * @this WhiteBoard
+     * @param {Object} opt 
+     * @returns {undefined}
+     */
     mousemove: function mousemove(opt) {
       // if is not mousedown, do nothing
       if (!this.isMouseDown) return;
@@ -926,6 +955,13 @@ var _initialiseProps = function _initialiseProps() {
     pathCreated: function pathCreated(o) {
       //TODO:
     },
+    /**
+     * 
+     * fired when fabric object added
+     * @this WhiteBoard
+     * @param {Object} o 
+     * event option
+     */
     objectAdded: function objectAdded(o) {
       // 因为freeDrawing的object:added再mouseup之前，需要再此设置
       if (!('id' in o.target)) {
@@ -946,8 +982,13 @@ var _initialiseProps = function _initialiseProps() {
         target: o.target
       });
     },
+    /**
+     * 
+     * fired when fabric object removed
+     * @param {Object} o 
+     * event option
+     */
     objectRemoved: function objectRemoved(o) {
-      // 对象的from属性表示了来自那个操作，某些操作可能不需要触发回调
       if (o.target.from === ALL_FROM.draw) {
         this._pushUndo({
           action: All_EVT['object:removed'],
@@ -964,6 +1005,11 @@ var _initialiseProps = function _initialiseProps() {
         target: o.target
       });
     },
+    /**
+     * fired when all fabric objects removed
+     * 
+     * @param {object} o 
+     */
     allObjectsRemoved: function allObjectsRemoved(o) {
       // 触发回调
       this.ep.fire(All_EVT['clear'], o);
@@ -972,26 +1018,10 @@ var _initialiseProps = function _initialiseProps() {
   this.log = new Logger(true);
 };
 
+WhiteBoard.version = __webpack_require__(0);
+WhiteBoard;
 global.WhiteBoard = WhiteBoard;
-
 module.exports = WhiteBoard;
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-/*
- * @Author: Liu Jing 
- * @Date: 2017-10-18 11:19:55 
- * @Last Modified by:   Liu Jing 
- * @Last Modified time: 2017-10-18 11:19:55 
- */
-module.exports = {
-  ver: '2017-10-18'
-};
 
 /***/ }),
 /* 3 */

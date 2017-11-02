@@ -2,14 +2,14 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-31 18:17:01
+ * @Last Modified time: 2017-11-02 14:00:28
  */
+
 const version = require('./version');
 const cursor = require('./cursor');
 const ep = require('./eventproxy');
 const polyfill = require('./polyfill');
 const Logger = require('./log');
-/** @const default var*/
 const DEFAULT_CONFIG = {
   width: 500, //canvas width
   height: 375, // canvas height
@@ -29,14 +29,6 @@ const DEFAULT_CONFIG = {
   },
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 }
-/**
- * @type {Window}
- */
-const global = window;
-/**
- * @type {Document}
- */
-const doc = document;
 const ALL_TYPE = {
   'path': 'path',
   'circle': 'circle',
@@ -63,8 +55,15 @@ const ALL_FROM = {
   undo: 'undo', // object from undo,redo
   out: 'out' // object from render
 }
-/* polyfill for some browser */
-polyfill();
+/**
+ * @type {Window}
+ */
+const global = window;
+/**
+ * @type {Document}
+ */
+const doc = document;
+
 class WhiteBoard {
   /**
    * Creates an instance of WhiteBoard.
@@ -82,6 +81,8 @@ class WhiteBoard {
    * the fill color
    */
   constructor(o) {
+    /* polyfill for some browser */
+    polyfill();
     this._setting = Object.assign(DEFAULT_CONFIG, o);
     this.undoList = [];
     this.redoList = [];
@@ -235,7 +236,6 @@ class WhiteBoard {
    * 
    * define instance's prop setter and getter
    * @private
-   * @memberof WhiteBoard
    */
   _defineSetter() {
     for (let prop in this._setting) {
@@ -326,7 +326,7 @@ class WhiteBoard {
   }
   eventHandler = {
     /**
-     * 
+     * fired when mouse down
      * @this WhiteBoard
      * @param {object} opt 
      */
@@ -350,8 +350,8 @@ class WhiteBoard {
       });
     },
     /**
-     * 
-     * 
+     * fired when mouse up
+     * @this WhiteBoard
      * @param {Object} opt 
      */
     mouseup: function (opt) {
@@ -370,8 +370,8 @@ class WhiteBoard {
       });
     },
     /**
-     * 
-     * 
+     * fired when mouse move
+     * @this WhiteBoard
      * @param {Object} opt 
      * @returns {undefined}
      */
@@ -453,6 +453,11 @@ class WhiteBoard {
       });
 
     },
+    /**
+     * fired when all fabric objects removed
+     * 
+     * @param {object} o 
+     */
     allObjectsRemoved: function (o) {
       // 触发回调
       this.ep.fire(All_EVT['clear'], o);
@@ -461,7 +466,6 @@ class WhiteBoard {
   /**
    * @private
    * register events handler
-   * 
    */
   _registerEventListener() {
     for (let x in All_EVT) {
@@ -680,12 +684,12 @@ class WhiteBoard {
     }
     this.redoList.push(this.undoList.pop())
   }
-/**
- * 
- * redo
- * @returns {undefined}
- */
-redo() {
+  /**
+   * 
+   * redo
+   * @returns {undefined}
+   */
+  redo() {
     if (this.redoList.length === 0) return;
     let redo = this.redoList[this.redoList.length - 1];
     redo.target.from = ALL_FROM.undo;
@@ -794,11 +798,18 @@ redo() {
    * @param {number} ratio 
    * resize number
    * @returns {boolean}
+   * means set success or faild
    */
   resize(ratio) {
     return this.set('ratio', ratio);
   }
+  /**
+   * event proxy
+   */
   ep = new ep();
+  /**
+   * logger factory
+   */
   log = new Logger(true);
 
   /**
@@ -825,5 +836,9 @@ redo() {
     }
   }
 }
+WhiteBoard.version = version;
 global.WhiteBoard = WhiteBoard;
+/**
+ * @module WhiteBoard
+ */
 module.exports = WhiteBoard;

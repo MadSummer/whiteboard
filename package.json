@@ -6,18 +6,18 @@
     "dev": "webpack-dev-server",
     "socket": "node ./src/socket.js",
     "bulid": "webpack",
-    "demo": "npm-run-all --parallel bulid socket dev"
+    "demo": "npm-run-all --parallel bulid socket dev",
+    "jsdoc": "jsdoc ./src/whiteboard.js"
   },
-  "dependencies": {
-    
-  },
+  "dependencies": {},
   "devDependencies": {
-    "socket.io": "^1.5.1",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.6.0",
+    "jsdoc": "^3.5.5",
     "npm-run-all": "^4.1.1",
+    "socket.io": "^1.5.1",
     "webpack": "^3.7.1",
     "webpack-dev-server": "^2.9.2"
   }

@@ -2,23 +2,24 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-18 11:20:05 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-20 15:41:30
+ * @Last Modified time: 2017-11-02 11:02:24
  */
-class EventProxy {
+
+/**
+ * @module EventProxy
+ */
+module.exports = class EventProxy {
   /**
    * Creates an instance of EventProxy.
-   * @memberof EventProxy
    */
   constructor() {
     this.event = {};
   }
   /**
-   * 
-   * 
+   * fire event
    * @param {string} evt 
    * @param {any} data 
-   * @returns 
-   * @memberof EventProxy
+   * @returns {undefined}
    */
   fire(evt, data) {
     let event = this.event[evt];
@@ -28,11 +29,9 @@ class EventProxy {
     })
   }
   /**
-   * 
-   * 
+   * add event listener
    * @param {string} evt 
    * @param {function} cb 
-   * @memberof EventProxy
    */
   on(evt, cb) {
     if (this.event[evt]) {
@@ -45,5 +44,3 @@ class EventProxy {
     }
   }
 }
-
-module.exports = EventProxy;
