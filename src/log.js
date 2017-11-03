@@ -2,35 +2,59 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-23 10:06:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-23 10:08:33
+ * @Last Modified time: 2017-11-03 15:14:23
  */
-module.exports = class Logger{
+class Logger{
+  /**
+   * Creates an instance of Logger.
+   * @param {boolean} [debug=true] 
+   */
   constructor(debug = true) {
     this.debugMode = debug;
   }
+  /**
+   * 
+   * debug out
+   * @returns {undefined}
+   */
   debug() {
     if (!this.debugMode) return;
     console.debug.apply(console, arguments);
   }
+  /**
+   * 
+   * error out
+   * @returns {undefined}
+   */
   error() {
     if (!this.debugMode) return;
     if (!this.debugMode) return;
     console.error.apply(console, arguments);
   }
+  /**
+   * info out
+   * @returns {undefined}
+   */
   info() {
     if (!this.debugMode) return;
     console.info.apply(console, arguments);
   }
+  /**
+   * log out
+   * @returns {undefined}
+   */
   log() {
     if (!this.debugMode) return;
     console.log.apply(console, arguments);
   }
   /**
    * 
-   * set debug mode
-   * @param {boolean} debugMode 
+   * set debug model
+   * @param {boolean} [debugMode=true] 
+   * @memberof Logger
    */
-  setMode(debugMode) {
+  setMode(debugMode = true) {
     this.debugMode = !!debugMode;
   }
 }
+module.exports = Logger;

@@ -2,13 +2,10 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-18 11:20:05 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-02 11:02:24
+ * @Last Modified time: 2017-11-03 15:39:09
  */
 
-/**
- * @module EventProxy
- */
-module.exports = class EventProxy {
+class EventProxy {
   /**
    * Creates an instance of EventProxy.
    */
@@ -44,3 +41,4 @@ module.exports = class EventProxy {
     }
   }
 }
+module.exports = EventProxy;

@@ -87,9 +87,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-03 14:45:08
+ * @Last Modified time: 2017-11-03 15:43:47
  */
-
+/**
+ * @memberof WhiteBoard
+ */
 var version = __webpack_require__(2);
 var cursor = __webpack_require__(3);
 var ep = __webpack_require__(4);
@@ -223,6 +225,7 @@ var WhiteBoard = function () {
     /**
      * 
      * add textarea element
+     * @private
      * @param {Element} el 
      *  continer
      */
@@ -497,6 +500,10 @@ var WhiteBoard = function () {
       }
       return true;
     }
+    /**
+     * @memberof WhiteBoard
+     */
+
   }, {
     key: '_registerEventListener',
 
@@ -908,10 +915,12 @@ var WhiteBoard = function () {
     }
     /**
      * event proxy
+     * @see EventProxy
      */
 
     /**
      * logger factory
+     * @see Logger
      */
 
   }, {
@@ -952,12 +961,13 @@ var WhiteBoard = function () {
 var _initialiseProps = function _initialiseProps() {
   this.eventHandler = {
     /**
-     * fired when mouse down
-     * @this WhiteBoard
-     * @param {object} opt 
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#mouse:down
+     * @param {Object} opt 
+     * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mousedown: function mousedown(opt) {
-      // `this` is a instance of WhiteBoard ,use apply bind runtime context
       // set start pointer
       var pointer = this.canvas.getPointer(opt.e);
       this.set({
@@ -981,16 +991,22 @@ var _initialiseProps = function _initialiseProps() {
           self._textarea.focus();
         }, 0);
       }
-
-      // fire mouse:down
+      /**
+       * @event mousedown
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire(All_EVT['mouse:down'], {
         object: opt.target
       });
     },
     /**
-     * fired when mouse up
-     * @this WhiteBoard
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#mouse:up
      * @param {Object} opt 
+     * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mouseup: function mouseup(opt) {
       //set end point
@@ -1002,16 +1018,22 @@ var _initialiseProps = function _initialiseProps() {
       });
       // render current
       this._renderWhenMouseUp();
-      //fire mouse:up 
+      /**
+       * @event mouseup
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire(All_EVT['mouse:up'], {
         object: opt.target
       });
     },
     /**
-     * fired when mouse move
-     * @this WhiteBoard
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#mouse:move
      * @param {Object} opt 
      * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mousemove: function mousemove(opt) {
       // if is not mousedown, do nothing
@@ -1024,28 +1046,57 @@ var _initialiseProps = function _initialiseProps() {
       });
       // render
       this._renderWhenMouseMove();
-      // fire mouse:move
+      /**
+       * @event mousemove
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire(All_EVT['mouse:move'], {
         object: opt.target
       });
     },
+    /**
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#mouse:over
+     * @param {Object} opt 
+     * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
+     */
     mouseover: function mouseover() {
-      //fire mouse:over
+      /**
+       * @event mouseover
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire(All_EVT['mouse:over']);
     },
+    /**
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#mouse:out
+     * @param {Object} opt 
+     * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
+     */
     mouseout: function mouseout() {
-      // fire mouse:out
+      /**
+       * @event mouseout
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire('mouse:out');
     },
     pathCreated: function pathCreated(o) {
       //TODO:
     },
     /**
-     * 
-     * fired when fabric object added
-     * @this WhiteBoard
-     * @param {Object} o 
-     * event option
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#object:added
+     * @param {Object} opt 
+     * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     objectAdded: function objectAdded(o) {
       // 因为freeDrawing的object:added再mouseup之前，需要再此设置
@@ -1062,16 +1113,22 @@ var _initialiseProps = function _initialiseProps() {
           target: o.target
         });
       }
-      // 触发回调 回调根据from属性判断来源
+      /**
+       * @event objectAdded
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire(All_EVT['object:added'], {
         target: o.target
       });
     },
     /**
-     * 
-     * fired when fabric object removed
-     * @param {Object} o 
-     * event option
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#object:removed
+     * @param {Object} opt 
+     * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     objectRemoved: function objectRemoved(o) {
       if (o.target.from === ALL_FROM.draw) {
@@ -1080,23 +1137,49 @@ var _initialiseProps = function _initialiseProps() {
           target: o.target
         });
       }
+      /**
+       * @event objectRemoved
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire(All_EVT['object:removed'], {
         target: o.target
       });
     },
+    /**
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#object:midfied
+     * @param {Object} opt 
+     * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
+     */
     objectModified: function objectModified(o) {
-      // 触发回调
+      /**
+       * @event objectModified
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire(All_EVT['object:modified'], {
         target: o.target
       });
     },
     /**
-     * fired when all fabric objects removed
-     * 
-     * @param {object} o 
+     * @memberof WhiteBoard
+     * @listens fabric.canvas#object:allObjects:removed
+     * @param {Object} opt 
+     * @returns {undefined}
+     * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     allObjectsRemoved: function allObjectsRemoved(o) {
-      // 触发回调
+      /**
+       * clear the canvas
+       * @event clear
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
       this.ep.fire(All_EVT['clear'], o);
     } };
   this.ep = new ep();
@@ -1105,10 +1188,6 @@ var _initialiseProps = function _initialiseProps() {
 
 WhiteBoard.version = version;
 global.WhiteBoard = WhiteBoard;
-/**
- * @module WhiteBoard
- */
-module.exports = WhiteBoard;
 
 /***/ }),
 /* 2 */
@@ -1160,13 +1239,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-18 11:20:05 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-02 11:02:24
+ * @Last Modified time: 2017-11-03 15:39:09
  */
 
-/**
- * @module EventProxy
- */
-module.exports = function () {
+var EventProxy = function () {
   /**
    * Creates an instance of EventProxy.
    */
@@ -1214,6 +1290,8 @@ module.exports = function () {
 
   return EventProxy;
 }();
+
+module.exports = EventProxy;
 
 /***/ }),
 /* 5 */
@@ -1279,9 +1357,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-23 10:06:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-23 10:08:33
+ * @Last Modified time: 2017-11-03 15:14:23
  */
-module.exports = function () {
+var Logger = function () {
+  /**
+   * Creates an instance of Logger.
+   * @param {boolean} [debug=true] 
+   */
   function Logger() {
     var debug = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
@@ -1289,6 +1371,12 @@ module.exports = function () {
 
     this.debugMode = debug;
   }
+  /**
+   * 
+   * debug out
+   * @returns {undefined}
+   */
+
 
   _createClass(Logger, [{
     key: "debug",
@@ -1296,6 +1384,12 @@ module.exports = function () {
       if (!this.debugMode) return;
       console.debug.apply(console, arguments);
     }
+    /**
+     * 
+     * error out
+     * @returns {undefined}
+     */
+
   }, {
     key: "error",
     value: function error() {
@@ -1303,12 +1397,22 @@ module.exports = function () {
       if (!this.debugMode) return;
       console.error.apply(console, arguments);
     }
+    /**
+     * info out
+     * @returns {undefined}
+     */
+
   }, {
     key: "info",
     value: function info() {
       if (!this.debugMode) return;
       console.info.apply(console, arguments);
     }
+    /**
+     * log out
+     * @returns {undefined}
+     */
+
   }, {
     key: "log",
     value: function log() {
@@ -1317,19 +1421,24 @@ module.exports = function () {
     }
     /**
      * 
-     * set debug mode
-     * @param {boolean} debugMode 
+     * set debug model
+     * @param {boolean} [debugMode=true] 
+     * @memberof Logger
      */
 
   }, {
     key: "setMode",
-    value: function setMode(debugMode) {
+    value: function setMode() {
+      var debugMode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
       this.debugMode = !!debugMode;
     }
   }]);
 
   return Logger;
 }();
+
+module.exports = Logger;
 
 /***/ })
 /******/ ]);
