@@ -2,7 +2,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-02 14:00:28
+ * @Last Modified time: 2017-11-03 14:45:08
  */
 
 const version = require('./version');
@@ -16,7 +16,9 @@ const DEFAULT_CONFIG = {
   ratio: 1, // zoom value
   undoMax: 10, // max undo limit
   type: 'path', // default draw type
-  fontSize: 16, // fon size
+  fontSize: 24, // font size
+  fontFamily: 'Microsoft Yahei',
+  fontWeight:'normal',
   strokeWidth: 2, // stroke line width
   stroke: 'red', // stroke line color
   fillColor: '', //  fill color
@@ -36,6 +38,7 @@ const ALL_TYPE = {
   'line': 'line',
   'eraser': 'eraser',
   'clear': 'clear',
+  'text': 'text'
 }
 const All_EVT = {
   'mouse:down': 'mousedown',
@@ -123,6 +126,53 @@ class WhiteBoard {
     // getter and setter  
     this._defineSetter();
   }
+  /**
+   * 
+   * add textarea element
+   * @param {Element} el 
+   *  continer
+   */
+  _appendTextarea(el) {
+    let self = this;
+    let textarea = doc.createElement('textarea');
+    self._textarea = textarea;
+    textarea.style.display = 'none';
+    textarea.style.position = 'absolute';
+    textarea.style.left = 0;
+    textarea.style.top = 0;
+    textarea.addEventListener('blur', function (e) {
+      e.stopPropagation();
+      if (self.type !== ALL_TYPE.text) return this.style.display = 'none';
+      let text = this.value.trim();
+      if (!text) return this.style.display = 'none';
+      let object = self._createObject({
+        type: ALL_TYPE.text,
+        left: parseFloat(this.style.left),
+        top: parseFloat(this.style.top),
+        fill:self.fillColor || self.stroke,
+        stroke: self.stroke,
+        strokeWidth: self.strokeWidth,
+        fontSize: self.fontSize,
+        fontFamily: self.fontFamily,
+        fontWeight:self.fontWeight,
+        text: text,
+        id:self.generateID()
+      });
+      self.canvas.add(object);
+      this.value = '';
+      this.style.display = 'none';
+    });
+    textarea.addEventListener('mousedown', function (e) {
+      e.stopPropagation();
+    }, false);
+    textarea.addEventListener('mouseup', function (e) {
+      e.stopPropagation();
+    }, false);
+    textarea.addEventListener('mousemove', function (e) {
+      e.stopPropagation();
+    }, false);
+    el.appendChild(textarea);
+  }
 
   /**
    * Create an instance of fabric
@@ -138,6 +188,8 @@ class WhiteBoard {
       selection: false
       //perPixelTargetFind:false 
     });
+
+    this._appendTextarea(this.canvas.wrapperEl);
 
     fabric.Object.prototype.selectable = this._setting.selectable;
     /**
@@ -155,28 +207,37 @@ class WhiteBoard {
         from: this.from
       }
       switch (this.type) {
-        case 'line':
+        case ALL_TYPE.line:
           data.x1 = this.x1;
           data.x2 = this.x2;
           data.y1 = this.y1;
           data.y2 = this.y2;
           break;
-        case 'circle':
+        case ALL_TYPE.circle:
           data.top = this.top;
           data.left = this.left;
           data.radius = this.radius;
           break;
-        case 'rect':
+        case ALL_TYPE.rect:
           data.width = this.width;
           data.height = this.height;
           data.top = this.top;
           data.left = this.left;
           break;
-        case 'path':
+        case ALL_TYPE.path:
           data.path = this.path.join(' ').replace(/,/g, ' ');
           data.height = this.height;
           data.top = this.top;
           data.left = this.left;
+          break;
+        case ALL_TYPE.text:
+          data.text = this.text;
+          data.height = this.height;
+          data.top = this.top;
+          data.left = this.left;
+          data.fontFamily = this.fontFamily;
+          data.fontSize = this.fontSize;
+          data.fontWeight = this.fontWeight;
           break;
         default:
           break;
@@ -277,27 +338,28 @@ class WhiteBoard {
         this.canvas.freeDrawingBrush.color = value;
         break;
       case 'type':
-
+        // reset
         this.canvas.isDrawingMode = false;
-
         this.canvas.hoverCursor = 'default';
-
+        this.canvas.defaultCursor = 'default';
+        // if path and allowDrawing,open isDrawingMode
         if (value === ALL_TYPE.path && this.allowDrawing === true) {
           this.canvas.isDrawingMode = true;
         }
-
+        // if  is eraser, set hover cursor
         if (value === ALL_TYPE.eraser) {
           this.canvas.hoverCursor = cursor.eraser;
         }
+        // if is not text, disappear the textarea element
+        if (value !== ALL_TYPE.text) this._textarea.style.display = 'none';
+        // if is text , set default cursor as text
+        if (value === ALL_TYPE.text) this.canvas.defaultCursor = 'text';
         break;
       case 'strokeWidth':
-
         this.canvas.freeDrawingBrush.width = parseInt(value) > 2 ? parseInt(value) : 2;
-
         if (parseInt(value) === 1) {
           this._setting.strokeWidth = 2
         }
-
         break;
       case 'ratio':
         let maxSize = this._setting.maxSize;
@@ -344,6 +406,18 @@ class WhiteBoard {
         opt.target && opt.target.remove();
         opt.target.from = ALL_FROM.draw;
       }
+      // if text
+      if (this.type === ALL_TYPE.text) {
+        if (this._textarea.style.display === 'block') return;
+        this._textarea.style.display = 'block';
+        this._textarea.style.left = this.startX + 'px';
+        this._textarea.style.top = this.startY - this.fontSize / 2 + 'px';
+        var self = this;
+        setTimeout(function() {
+          self._textarea.focus();
+        }, 0);
+      }
+
       // fire mouse:down
       this.ep.fire(All_EVT['mouse:down'], {
         object: opt.target
@@ -480,6 +554,16 @@ class WhiteBoard {
    * create a fabric object instance
    * @private
    * @param {Object} o 
+   * @param {string} o.type
+   * type
+   * @param {string} o.stroke
+   * stroke color
+   * @param {string} o.strokeWidth
+   * strokeWidth
+   * @param {number} o.left
+   * offset left
+   * @param {number} o.top
+   * offset top
    * @returns {fabric.Object}
    */
   _createObject(o) {
@@ -489,7 +573,7 @@ class WhiteBoard {
           stroke: o.stroke,
           strokeWidth: o.strokeWidth,
           radius: 90,
-          strokeLineCap: this.storkeLineCap,
+          strokeLineCap: o.storkeLineCap,
           id: o.id
         })
         break;
@@ -511,7 +595,7 @@ class WhiteBoard {
           top: o.top,
           left: o.left,
           stroke: o.stroke,
-          strokeLineJoin: this.strokeLineJoin,
+          strokeLineJoin: o.storkeLineCap,
           strokeWidth: o.strokeWidth,
           fill: o.fillColor,
           id: o.id
@@ -522,8 +606,22 @@ class WhiteBoard {
           stroke: o.stroke,
           strokeWidth: o.strokeWidth,
           fill: o.fill,
-          strokeLineCap: this.strokeLineCap,
+          strokeLineCap: o.storkeLineCap,
           id: o.id
+        })
+        break;
+      case ALL_TYPE.text:
+        return new fabric.Text(o.text, {
+          stroke: o.stroke,
+          strokeWidth: o.strokeWidth,
+          fill: o.fill,
+          strokeLineCap: o.storkeLineCap,
+          id: o.id,
+          left: o.left,
+          top: o.top,
+          fontFamily: o.fontFamily,
+          fontSize: o.fontSize,
+          fontWeight: o.fontWeight
         })
       default:
         break;
@@ -585,7 +683,7 @@ class WhiteBoard {
   _renderWhenMouseUp() {
     if (!this._setting.allowDrawing) return;
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type) return;
+    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type) return;
     let startX = this.startX;
     let startY = this.startY;
     let endX = this.endX;
@@ -595,6 +693,7 @@ class WhiteBoard {
     let fillColor = this.fillColor;
     let strokeWidth = this.strokeWidth;
     let stroke = this.stroke;
+    let strokeLineCap = this.strokeLineCap;
     let isMouseDown = this.isMouseDown;
     let ctx = this.ctx;
     let ratio = this.ratio;
@@ -608,7 +707,7 @@ class WhiteBoard {
       type: type,
       stroke: stroke,
       strokeWidth: strokeWidth,
-      strokeLineCap: this.strokeLineCap,
+      strokeLineCap: strokeLineCap,
       strokeWidth: strokeWidth,
       fillColor: fillColor,
       id: this.generateID()

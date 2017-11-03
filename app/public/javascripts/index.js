@@ -4,17 +4,18 @@ $(document).ready(function () {
   $('#whiteboard').attr('width', width);
   $('#whiteboard').attr('height', height);
   window.wb = new WhiteBoard({
-    ratio:.5,
+    ratio: 1,
     id: 'whiteboard',
-    stroke: 'red', 
+    stroke: 'red',
     generateID: function () {
       return (Math.random() * 100000);
     },
     width: 892,
     height: 1263,
-    maxSize:8192,
+    maxSize: 8192,
+    maxObject:200,
     wrap: '#canvas-scroll-wp',
-    allowDrawing:true
+    allowDrawing: true
   });
   wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');
   wb.ep.on('mousedown', function () {
@@ -91,31 +92,10 @@ $(document).ready(function () {
   }, function () {
     $(this).find('ul').addClass('hidden')
   })
-  $('.upper-canvas').click(function (e) {
-    if (wb.type == 'text' && $('#input').is(':hidden')) {
-      $('#input').css({
-        'top': e.clientY,
-        'left': e.clientX
-      }).show().focus();
-      $('#input').attr('data-x', wb.startX);
-      $('#input').attr('data-y', wb.startY);
-    } else {
-      $('#input').hide();
-    }
-  });
-  $('#input').blur(function () {
-    if ($.trim($(this).val()) == '') {
-      return;
-    }
-    var x = +$(this).attr('data-x');
-    var y = +$(this).attr('data-y');
-    wb.text($(this).val(), x, y);
-    $(this).val('');
-  })
   // 
   //
   // 监听 
-  var socket = io.connect( window.location.hostname + ':4008');
+  var socket = io.connect(window.location.hostname + ':4008');
   socket.on('server', function (msg) {
     switch (msg.action) {
       case 'add':

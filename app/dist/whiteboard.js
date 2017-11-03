@@ -60,35 +60,18 @@
 /******/ 	__webpack_require__.p = "E:\\node\\whiteboard\\app\\dist\\";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+module.exports = __webpack_require__(1);
 
-
-/*
- * @Author: Liu Jing 
- * @Date: 2017-10-18 11:19:55 
- * @Last Modified by:   Liu Jing 
- * @Last Modified time: 2017-10-18 11:19:55 
- */
-module.exports = {
-  ver: '2017-10-18'
-};
 
 /***/ }),
 /* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(2);
-
-
-/***/ }),
-/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104,10 +87,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-02 10:14:38
+ * @Last Modified time: 2017-11-03 14:45:08
  */
 
-var version = __webpack_require__(0);
+var version = __webpack_require__(2);
 var cursor = __webpack_require__(3);
 var ep = __webpack_require__(4);
 var polyfill = __webpack_require__(5);
@@ -118,7 +101,9 @@ var DEFAULT_CONFIG = {
   ratio: 1, // zoom value
   undoMax: 10, // max undo limit
   type: 'path', // default draw type
-  fontSize: 16, // fon size
+  fontSize: 24, // font size
+  fontFamily: 'Microsoft Yahei',
+  fontWeight: 'normal',
   strokeWidth: 2, // stroke line width
   stroke: 'red', // stroke line color
   fillColor: '', //  fill color
@@ -138,7 +123,8 @@ var ALL_TYPE = {
   'rect': 'rect',
   'line': 'line',
   'eraser': 'eraser',
-  'clear': 'clear'
+  'clear': 'clear',
+  'text': 'text'
 };
 var All_EVT = {
   'mouse:down': 'mousedown',
@@ -166,8 +152,6 @@ var ALL_FROM = {
  * @type {Document}
  */
 var doc = document;
-/* polyfill for some browser */
-polyfill();
 
 var WhiteBoard = function () {
   /**
@@ -190,6 +174,8 @@ var WhiteBoard = function () {
 
     _initialiseProps.call(this);
 
+    /* polyfill for some browser */
+    polyfill();
     this._setting = Object.assign(DEFAULT_CONFIG, o);
     this.undoList = [];
     this.redoList = [];
@@ -234,6 +220,56 @@ var WhiteBoard = function () {
       // getter and setter  
       this._defineSetter();
     }
+    /**
+     * 
+     * add textarea element
+     * @param {Element} el 
+     *  continer
+     */
+
+  }, {
+    key: '_appendTextarea',
+    value: function _appendTextarea(el) {
+      var self = this;
+      var textarea = doc.createElement('textarea');
+      self._textarea = textarea;
+      textarea.style.display = 'none';
+      textarea.style.position = 'absolute';
+      textarea.style.left = 0;
+      textarea.style.top = 0;
+      textarea.addEventListener('blur', function (e) {
+        e.stopPropagation();
+        if (self.type !== ALL_TYPE.text) return this.style.display = 'none';
+        var text = this.value.trim();
+        if (!text) return this.style.display = 'none';
+        var object = self._createObject({
+          type: ALL_TYPE.text,
+          left: parseFloat(this.style.left),
+          top: parseFloat(this.style.top),
+          fill: self.fillColor || self.stroke,
+          stroke: self.stroke,
+          strokeWidth: self.strokeWidth,
+          fontSize: self.fontSize,
+          fontFamily: self.fontFamily,
+          fontWeight: self.fontWeight,
+          text: text,
+          id: self.generateID()
+        });
+        self.canvas.add(object);
+        this.value = '';
+        this.style.display = 'none';
+      });
+      textarea.addEventListener('mousedown', function (e) {
+        e.stopPropagation();
+      }, false);
+      textarea.addEventListener('mouseup', function (e) {
+        e.stopPropagation();
+      }, false);
+      textarea.addEventListener('mousemove', function (e) {
+        e.stopPropagation();
+      }, false);
+      el.appendChild(textarea);
+    }
 
     /**
      * Create an instance of fabric
@@ -253,6 +289,8 @@ var WhiteBoard = function () {
         //perPixelTargetFind:false 
       });
 
+      this._appendTextarea(this.canvas.wrapperEl);
+
       fabric.Object.prototype.selectable = this._setting.selectable;
       /**
        * 
@@ -269,28 +307,37 @@ var WhiteBoard = function () {
           from: this.from
         };
         switch (this.type) {
-          case 'line':
+          case ALL_TYPE.line:
             data.x1 = this.x1;
             data.x2 = this.x2;
             data.y1 = this.y1;
             data.y2 = this.y2;
             break;
-          case 'circle':
+          case ALL_TYPE.circle:
             data.top = this.top;
             data.left = this.left;
             data.radius = this.radius;
             break;
-          case 'rect':
+          case ALL_TYPE.rect:
             data.width = this.width;
             data.height = this.height;
             data.top = this.top;
             data.left = this.left;
             break;
-          case 'path':
+          case ALL_TYPE.path:
             data.path = this.path.join(' ').replace(/,/g, ' ');
             data.height = this.height;
             data.top = this.top;
             data.left = this.left;
+            break;
+          case ALL_TYPE.text:
+            data.text = this.text;
+            data.height = this.height;
+            data.top = this.top;
+            data.left = this.left;
+            data.fontFamily = this.fontFamily;
+            data.fontSize = this.fontSize;
+            data.fontWeight = this.fontWeight;
             break;
           default:
             break;
@@ -402,27 +449,28 @@ var WhiteBoard = function () {
           this.canvas.freeDrawingBrush.color = value;
           break;
         case 'type':
-
+          // reset
           this.canvas.isDrawingMode = false;
-
           this.canvas.hoverCursor = 'default';
-
+          this.canvas.defaultCursor = 'default';
+          // if path and allowDrawing,open isDrawingMode
           if (value === ALL_TYPE.path && this.allowDrawing === true) {
             this.canvas.isDrawingMode = true;
           }
-
+          // if  is eraser, set hover cursor
           if (value === ALL_TYPE.eraser) {
             this.canvas.hoverCursor = cursor.eraser;
           }
+          // if is not text, disappear the textarea element
+          if (value !== ALL_TYPE.text) this._textarea.style.display = 'none';
+          // if is text , set default cursor as text
+          if (value === ALL_TYPE.text) this.canvas.defaultCursor = 'text';
           break;
         case 'strokeWidth':
-
           this.canvas.freeDrawingBrush.width = parseInt(value) > 2 ? parseInt(value) : 2;
-
           if (parseInt(value) === 1) {
             this._setting.strokeWidth = 2;
           }
-
           break;
         case 'ratio':
           var maxSize = this._setting.maxSize;
@@ -475,6 +523,16 @@ var WhiteBoard = function () {
      * create a fabric object instance
      * @private
      * @param {Object} o 
+     * @param {string} o.type
+     * type
+     * @param {string} o.stroke
+     * stroke color
+     * @param {string} o.strokeWidth
+     * strokeWidth
+     * @param {number} o.left
+     * offset left
+     * @param {number} o.top
+     * offset top
      * @returns {fabric.Object}
      */
 
@@ -487,7 +545,7 @@ var WhiteBoard = function () {
             stroke: o.stroke,
             strokeWidth: o.strokeWidth,
             radius: 90,
-            strokeLineCap: this.storkeLineCap,
+            strokeLineCap: o.storkeLineCap,
             id: o.id
           });
           break;
@@ -509,7 +567,7 @@ var WhiteBoard = function () {
             top: o.top,
             left: o.left,
             stroke: o.stroke,
-            strokeLineJoin: this.strokeLineJoin,
+            strokeLineJoin: o.storkeLineCap,
             strokeWidth: o.strokeWidth,
             fill: o.fillColor,
             id: o.id
@@ -520,8 +578,22 @@ var WhiteBoard = function () {
             stroke: o.stroke,
             strokeWidth: o.strokeWidth,
             fill: o.fill,
-            strokeLineCap: this.strokeLineCap,
+            strokeLineCap: o.storkeLineCap,
             id: o.id
+          });
+          break;
+        case ALL_TYPE.text:
+          return new fabric.Text(o.text, {
+            stroke: o.stroke,
+            strokeWidth: o.strokeWidth,
+            fill: o.fill,
+            strokeLineCap: o.storkeLineCap,
+            id: o.id,
+            left: o.left,
+            top: o.top,
+            fontFamily: o.fontFamily,
+            fontSize: o.fontSize,
+            fontWeight: o.fontWeight
           });
         default:
           break;
@@ -591,7 +663,7 @@ var WhiteBoard = function () {
 
       if (!this._setting.allowDrawing) return;
       var type = this.type;
-      if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type) return;
+      if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type) return;
       var startX = this.startX;
       var startY = this.startY;
       var endX = this.endX;
@@ -601,6 +673,7 @@ var WhiteBoard = function () {
       var fillColor = this.fillColor;
       var strokeWidth = this.strokeWidth;
       var stroke = this.stroke;
+      var strokeLineCap = this.strokeLineCap;
       var isMouseDown = this.isMouseDown;
       var ctx = this.ctx;
       var ratio = this.ratio;
@@ -614,7 +687,7 @@ var WhiteBoard = function () {
         type: type,
         stroke: stroke,
         strokeWidth: strokeWidth,
-        strokeLineCap: this.strokeLineCap
+        strokeLineCap: strokeLineCap
       }, _defineProperty(_o, 'strokeWidth', strokeWidth), _defineProperty(_o, 'fillColor', fillColor), _defineProperty(_o, 'id', this.generateID()), _o);
 
       switch (type) {
@@ -897,6 +970,18 @@ var _initialiseProps = function _initialiseProps() {
         opt.target && opt.target.remove();
         opt.target.from = ALL_FROM.draw;
       }
+      // if text
+      if (this.type === ALL_TYPE.text) {
+        if (this._textarea.style.display === 'block') return;
+        this._textarea.style.display = 'block';
+        this._textarea.style.left = this.startX + 'px';
+        this._textarea.style.top = this.startY - this.fontSize / 2 + 'px';
+        var self = this;
+        setTimeout(function () {
+          self._textarea.focus();
+        }, 0);
+      }
+
       // fire mouse:down
       this.ep.fire(All_EVT['mouse:down'], {
         object: opt.target
@@ -1018,10 +1103,29 @@ var _initialiseProps = function _initialiseProps() {
   this.log = new Logger(true);
 };
 
-WhiteBoard.version = __webpack_require__(0);
-WhiteBoard;
+WhiteBoard.version = version;
 global.WhiteBoard = WhiteBoard;
+/**
+ * @module WhiteBoard
+ */
 module.exports = WhiteBoard;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+/*
+ * @Author: Liu Jing 
+ * @Date: 2017-10-18 11:19:55 
+ * @Last Modified by:   Liu Jing 
+ * @Last Modified time: 2017-10-18 11:19:55 
+ */
+module.exports = {
+  ver: '2017-10-18'
+};
 
 /***/ }),
 /* 3 */
@@ -1056,12 +1160,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-18 11:20:05 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-10-20 15:41:30
+ * @Last Modified time: 2017-11-02 11:02:24
  */
-var EventProxy = function () {
+
+/**
+ * @module EventProxy
+ */
+module.exports = function () {
   /**
    * Creates an instance of EventProxy.
-   * @memberof EventProxy
    */
   function EventProxy() {
     _classCallCheck(this, EventProxy);
@@ -1069,12 +1176,10 @@ var EventProxy = function () {
     this.event = {};
   }
   /**
-   * 
-   * 
+   * fire event
    * @param {string} evt 
    * @param {any} data 
-   * @returns 
-   * @memberof EventProxy
+   * @returns {undefined}
    */
 
 
@@ -1088,11 +1193,9 @@ var EventProxy = function () {
       });
     }
     /**
-     * 
-     * 
+     * add event listener
      * @param {string} evt 
      * @param {function} cb 
-     * @memberof EventProxy
      */
 
   }, {
@@ -1111,8 +1214,6 @@ var EventProxy = function () {
 
   return EventProxy;
 }();
-
-module.exports = EventProxy;
 
 /***/ }),
 /* 5 */
