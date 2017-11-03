@@ -7,7 +7,7 @@
     "socket": "node ./src/socket.js",
     "bulid": "webpack",
     "demo": "npm-run-all --parallel bulid socket dev",
-    "jsdoc": "jsdoc ./src/whiteboard.js"
+    "jsdoc": "jsdoc ./src/ -d ./app/public/out"
   },
   "dependencies": {},
   "devDependencies": {

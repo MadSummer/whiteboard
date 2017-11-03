@@ -4,7 +4,7 @@ $(document).ready(function () {
   var height = parseInt($('#whiteboard').css('height')) || 600;
   $('#whiteboard').attr('width', width);
   $('#whiteboard').attr('height', height);
-  window.wb = new WhiteBoard({
+  wb = new WhiteBoard({
     ratio: 1,
     id: 'whiteboard',
     stroke: 'red',
@@ -18,6 +18,7 @@ $(document).ready(function () {
     wrap: '#canvas-scroll-wp',
     allowDrawing: true
   });
+
   wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');
   wb.ep.on('mousedown', function () {
     //console.log('mouse:down')
