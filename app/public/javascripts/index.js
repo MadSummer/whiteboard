@@ -1,3 +1,4 @@
+//const WhiteBoard = require('../../../src/whiteboard');
 $(document).ready(function () {
   var width = parseInt($('#whiteboard').css('width'));
   var height = parseInt($('#whiteboard').css('height')) || 600;

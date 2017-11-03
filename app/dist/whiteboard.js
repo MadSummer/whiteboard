@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-03 15:56:55
+ * @Last Modified time: 2017-11-03 15:59:59
  */
 /**
  * @memberof WhiteBoard
@@ -1212,6 +1212,7 @@ var _initialiseProps = function _initialiseProps() {
 
 WhiteBoard.version = version;
 global.WhiteBoard = WhiteBoard;
+module.exports = WhiteBoard;
 
 /***/ }),
 /* 2 */
