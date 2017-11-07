@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-07 13:52:26
+ * @Last Modified time: 2017-11-07 19:46:56
  */
 /**
  * @memberof WhiteBoard
@@ -192,7 +192,10 @@ var WhiteBoard = function () {
    * strokeLineCap
    * @param {string} [o.strokeLineJoin=round]
    * strokeLineJoin
+   * @param {string} o.backgroundImage
+   * backgroundImage
    * @param {function} [o.generateID=function () {return new Date().getTime() + Math.floor(Math.random() * 100);}]
+   *  object id generate function
    */
 
   function WhiteBoard(o) {
@@ -414,7 +417,7 @@ var WhiteBoard = function () {
         this.fire('allObjects:removed', obj);
         var backgroundImage = this.backgroundImage;
         this.clear();
-        if (!obj.removeBg && backgroundImage) {
+        if (obj && !obj.removeBg && backgroundImage) {
           this.setBackgroundImage(backgroundImage, this.renderAll.bind(this));
         }
       };
@@ -513,11 +516,14 @@ var WhiteBoard = function () {
             return false;
           }
           break;
-        case 'allowDrawing':
-          this.canvas.isDrawingMode = !!value;
+        case 'allowDrawing': 
+            this.canvas.isDrawingMode = !!value && this.type === ALL_TYPE.path;
           break;
         case 'selectable':
           fabric.Object.prototype.selectable = !!value;
+          break;
+        case 'backgroundImage':
+          this.loadBackgroundImage(value);
           break;
         default:
           break;
@@ -917,7 +923,7 @@ var WhiteBoard = function () {
   }, {
     key: 'loadBackgroundImage',
     value: function loadBackgroundImage(url) {
-      this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(wb.canvas), {
+      this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(this.canvas), {
         alignX: 'center',
         alignY: 'center',
         width: this.originalWidth,

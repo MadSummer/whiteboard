@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-07 13:52:26
+ * @Last Modified time: 2017-11-07 19:46:56
  */
 /**
  * @memberof WhiteBoard
@@ -107,7 +107,10 @@ class WhiteBoard {
    * strokeLineCap
    * @param {string} [o.strokeLineJoin=round]
    * strokeLineJoin
+   * @param {string} o.backgroundImage
+   * backgroundImage
    * @param {function} [o.generateID=function () {return new Date().getTime() + Math.floor(Math.random() * 100);}]
+   *  object id generate function
    */
 
   constructor(o) {
@@ -316,7 +319,7 @@ class WhiteBoard {
       this.fire('allObjects:removed', obj);
       let backgroundImage = this.backgroundImage;
       this.clear();
-      if (!obj.removeBg && backgroundImage) {
+      if (obj && !obj.removeBg && backgroundImage) {
         this.setBackgroundImage(backgroundImage, this.renderAll.bind(this));
       }
     };
@@ -408,6 +411,9 @@ class WhiteBoard {
         break;
       case 'selectable':
         fabric.Object.prototype.selectable = !!value;
+        break;
+        case 'backgroundImage':
+        this.loadBackgroundImage(value);
         break;
       default:
         break;
@@ -990,7 +996,7 @@ class WhiteBoard {
    * the url of the background image
    */
   loadBackgroundImage(url) {
-    this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(wb.canvas), {
+    this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(this.canvas), {
       alignX: 'center',
       alignY: 'center',
       width: this.originalWidth,
