@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-03 15:59:59
+ * @Last Modified time: 2017-11-07 13:52:26
  */
 /**
  * @memberof WhiteBoard
@@ -977,6 +977,28 @@ var WhiteBoard = function () {
         this.set(obj);
       }
     }
+  }, {
+    key: 'destory',
+    value: function destory() {
+      //clear objects
+      this.clear({ removeBg: true });
+      var wrapperEl = this.canvas.wrapperEl;
+      var upperCanvasEl = this.canvas.upperCanvasEl;
+      var lowerCanvasEl = this.canvas.lowerCanvasEl;
+      // reset canvas style and class
+      lowerCanvasEl.setAttribute('style', '');
+      lowerCanvasEl.classList.remove('lower-canvas');
+      // remove upperCanvasEl
+      wrapperEl.removeChild(upperCanvasEl);
+      // remove lowerCanvasEl
+      wrapperEl.removeChild(lowerCanvasEl);
+      // add lowerCanvasEl 
+      if (wrapperEl.parentNode) {
+        wrapperEl.parentNode.insertBefore(lowerCanvasEl, wrapperEl.nextSibling);
+      }
+      // remove wrapperEl
+      wrapperEl.parentNode.removeChild(wrapperEl);
+    }
   }]);
 
   return WhiteBoard;
@@ -1382,7 +1404,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author: Liu Jing 
  * @Date: 2017-10-23 10:06:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-03 15:14:23
+ * @Last Modified time: 2017-11-06 14:54:52
  */
 var Logger = function () {
   /**
@@ -1443,6 +1465,17 @@ var Logger = function () {
     value: function log() {
       if (!this.debugMode) return;
       console.log.apply(console, arguments);
+    }
+    /**
+     * 
+     * 
+     */
+
+  }, {
+    key: "warn",
+    value: function warn() {
+      if (!this.debugMode) return;
+      console.warn.apply(console, arguments);
     }
     /**
      * 

@@ -2,7 +2,7 @@
  * @Author: Liu Jing 
  * @Date: 2017-10-23 10:06:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-03 15:14:23
+ * @Last Modified time: 2017-11-06 14:54:52
  */
 class Logger{
   /**
@@ -46,6 +46,14 @@ class Logger{
   log() {
     if (!this.debugMode) return;
     console.log.apply(console, arguments);
+  }
+/**
+ * 
+ * 
+ */
+warn() {
+  if (!this.debugMode) return;
+  console.warn.apply(console, arguments);
   }
   /**
    * 

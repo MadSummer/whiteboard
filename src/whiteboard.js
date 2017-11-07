@@ -1,8 +1,9 @@
+
 /**
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-03 15:59:59
+ * @Last Modified time: 2017-11-07 13:52:26
  */
 /**
  * @memberof WhiteBoard
@@ -1039,6 +1040,26 @@ class WhiteBoard {
       this.originalWidth = obj.width;
       this.set(obj);
     }
+  }
+  destory() {
+    //clear objects
+    this.clear({ removeBg: true });
+    var wrapperEl = this.canvas.wrapperEl;
+    var upperCanvasEl = this.canvas.upperCanvasEl;
+    var lowerCanvasEl = this.canvas.lowerCanvasEl;
+    // reset canvas style and class
+    lowerCanvasEl.setAttribute('style', '');
+    lowerCanvasEl.classList.remove('lower-canvas');
+    // remove upperCanvasEl
+    wrapperEl.removeChild(upperCanvasEl);
+    // remove lowerCanvasEl
+    wrapperEl.removeChild(lowerCanvasEl);
+    // add lowerCanvasEl 
+    if (wrapperEl.parentNode) {
+      wrapperEl.parentNode.insertBefore(lowerCanvasEl, wrapperEl.nextSibling);
+    }
+    // remove wrapperEl
+    wrapperEl.parentNode.removeChild(wrapperEl);
   }
 }
 WhiteBoard.version = version;
