@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-08 12:23:15
+ * @Last Modified time: 2017-11-08 15:51:08
  */
 /**
  * @memberof WhiteBoard
@@ -1001,6 +1001,9 @@ var WhiteBoard = function () {
   }, {
     key: 'destory',
     value: function destory() {
+      if (typeof this.beforeDestroy === 'function') {
+        this.beforeDestroy();
+      }
       //clear objects
       this.clear({ removeBg: true });
       var wrapperEl = this.canvas.wrapperEl;
@@ -1019,6 +1022,37 @@ var WhiteBoard = function () {
       }
       // remove wrapperEl
       wrapperEl.parentNode.removeChild(wrapperEl);
+    }
+  }, {
+    key: 'getObjects',
+    value: function getObjects() {
+      var arr = [];
+      this.canvas.getObjects().forEach(function (obj) {
+        arr.push(obj.exportKeyAttr());
+      });
+      return arr;
+    }
+    /**
+     * 
+     * get item by id
+     * @param {string} id 
+     *  object id
+     */
+
+  }, {
+    key: 'getItemById',
+    value: function getItemById(id) {
+      return this.canvas.getItemById(id);
+    }
+    /**
+     * get last object
+     * 
+     */
+
+  }, {
+    key: 'getLastItem',
+    value: function getLastItem() {
+      return this.canvas.getLastItem();
     }
   }]);
 

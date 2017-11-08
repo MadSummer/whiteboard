@@ -16,7 +16,10 @@ $(document).ready(function () {
     maxSize: 8192,
     maxObject:200,
     wrap: '#canvas-scroll-wp',
-    allowDrawing: true
+    allowDrawing: true,
+    beforeDestroy: function () {
+      alert(1)
+    }
   });
 
   wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');

@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-08 12:23:15
+ * @Last Modified time: 2017-11-08 15:51:08
  */
 /**
  * @memberof WhiteBoard
@@ -1061,6 +1061,9 @@ class WhiteBoard {
     }
   }
   destory() {
+    if (typeof this.beforeDestroy === 'function') {
+      this.beforeDestroy();
+    }
     //clear objects
     this.clear({ removeBg: true });
     var wrapperEl = this.canvas.wrapperEl;
@@ -1079,6 +1082,29 @@ class WhiteBoard {
     }
     // remove wrapperEl
     wrapperEl.parentNode.removeChild(wrapperEl);
+  }
+  getObjects() {
+    const arr = [];
+    this.canvas.getObjects().forEach(obj => {
+      arr.push(obj.exportKeyAttr())
+    });
+    return  arr
+  }
+  /**
+   * 
+   * get item by id
+   * @param {string} id 
+   *  object id
+   */
+  getItemById(id) {
+    return this.canvas.getItemById(id);
+  }
+/**
+ * get last object
+ * 
+ */
+getLastItem() {
+  return this.canvas.getLastItem();
   }
 }
 WhiteBoard.version = version;
