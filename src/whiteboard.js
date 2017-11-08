@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-08 09:58:26
+ * @Last Modified time: 2017-11-08 12:23:15
  */
 /**
  * @memberof WhiteBoard
@@ -407,7 +407,7 @@ class WhiteBoard {
         }
         break;
       case 'allowDrawing':
-        this.canvas.isDrawingMode = !!value;
+        this.canvas.isDrawingMode = (!!value && this.type === ALL_TYPE.path);
         break;
       case 'selectable':
         fabric.Object.prototype.selectable = !!value;
@@ -432,6 +432,7 @@ class WhiteBoard {
      * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mousedown: function (opt) {
+      if (opt.e.button === 2) return;
       // set start pointer
       let pointer = this.canvas.getPointer(opt.e)
       this.set({
@@ -472,6 +473,7 @@ class WhiteBoard {
      * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mouseup: function (opt) {
+      if (opt.e.button === 2) return;
       //set end point
       let pointer = this.canvas.getPointer(opt.e)
       this.set({
