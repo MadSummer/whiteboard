@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-07 19:46:56
+ * @Last Modified time: 2017-11-08 09:58:26
  */
 /**
  * @memberof WhiteBoard
@@ -274,8 +274,8 @@ var WhiteBoard = function () {
         if (!text) return this.style.display = 'none';
         var object = self._createObject({
           type: ALL_TYPE.text,
-          left: parseFloat(this.style.left),
-          top: parseFloat(this.style.top),
+          left: parseFloat(this.style.left) / self.ratio,
+          top: parseFloat(this.style.top) / self.ratio,
           fill: self.fillColor || self.stroke,
           stroke: self.stroke,
           strokeWidth: self.strokeWidth,
@@ -516,8 +516,8 @@ var WhiteBoard = function () {
             return false;
           }
           break;
-        case 'allowDrawing': 
-            this.canvas.isDrawingMode = !!value && this.type === ALL_TYPE.path;
+        case 'allowDrawing':
+          this.canvas.isDrawingMode = !!value;
           break;
         case 'selectable':
           fabric.Object.prototype.selectable = !!value;
@@ -944,6 +944,21 @@ var WhiteBoard = function () {
       return this.set('ratio', ratio);
     }
     /**
+     * 
+     * set textarea position
+     * @param {number} [left=this.startX * this.ratio]
+     * offset left
+     * @param {number} [top=(this.startY - this.fontSize / 2) * this.ratio]
+     * offset top
+     */
+
+  }, {
+    key: 'setTextareaPosition',
+    value: function setTextareaPosition(left, top) {
+      this._textarea.style.left = this.startX * this.ratio + 'px';
+      this._textarea.style.top = (this.startY - this.fontSize / 2) * this.ratio + 'px';
+    }
+    /**
      * event proxy
      * @see EventProxy
      */
@@ -1036,8 +1051,7 @@ var _initialiseProps = function _initialiseProps() {
       if (this.type === ALL_TYPE.text) {
         if (this._textarea.style.display === 'block') return;
         this._textarea.style.display = 'block';
-        this._textarea.style.left = this.startX + 'px';
-        this._textarea.style.top = this.startY - this.fontSize / 2 + 'px';
+        this.setTextareaPosition();
         var self = this;
         setTimeout(function () {
           self._textarea.focus();

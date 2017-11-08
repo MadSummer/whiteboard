@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-07 19:46:56
+ * @Last Modified time: 2017-11-08 09:58:26
  */
 /**
  * @memberof WhiteBoard
@@ -21,7 +21,7 @@ const DEFAULT_CONFIG = {
   type: 'path', // default draw type
   fontSize: 24, // font size
   fontFamily: 'Microsoft Yahei',
-  fontWeight:'normal',
+  fontWeight: 'normal',
   strokeWidth: 2, // stroke line width
   stroke: 'red', // stroke line color
   fillColor: '', //  fill color
@@ -178,16 +178,16 @@ class WhiteBoard {
       if (!text) return this.style.display = 'none';
       let object = self._createObject({
         type: ALL_TYPE.text,
-        left: parseFloat(this.style.left),
-        top: parseFloat(this.style.top),
-        fill:self.fillColor || self.stroke,
+        left: parseFloat(this.style.left) / self.ratio,
+        top: parseFloat(this.style.top) / self.ratio,
+        fill: self.fillColor || self.stroke,
         stroke: self.stroke,
         strokeWidth: self.strokeWidth,
         fontSize: self.fontSize,
         fontFamily: self.fontFamily,
-        fontWeight:self.fontWeight,
+        fontWeight: self.fontWeight,
         text: text,
-        id:self.generateID()
+        id: self.generateID()
       });
       self.canvas.add(object);
       this.value = '';
@@ -412,7 +412,7 @@ class WhiteBoard {
       case 'selectable':
         fabric.Object.prototype.selectable = !!value;
         break;
-        case 'backgroundImage':
+      case 'backgroundImage':
         this.loadBackgroundImage(value);
         break;
       default:
@@ -448,10 +448,9 @@ class WhiteBoard {
       if (this.type === ALL_TYPE.text) {
         if (this._textarea.style.display === 'block') return;
         this._textarea.style.display = 'block';
-        this._textarea.style.left = this.startX + 'px';
-        this._textarea.style.top = this.startY - this.fontSize / 2 + 'px';
+        this.setTextareaPosition();
         var self = this;
-        setTimeout(function() {
+        setTimeout(function () {
           self._textarea.focus();
         }, 0);
       }
@@ -1012,6 +1011,18 @@ class WhiteBoard {
    */
   resize(ratio) {
     return this.set('ratio', ratio);
+  }
+  /**
+   * 
+   * set textarea position
+   * @param {number} [left=this.startX * this.ratio]
+   * offset left
+   * @param {number} [top=(this.startY - this.fontSize / 2) * this.ratio]
+   * offset top
+   */
+  setTextareaPosition(left, top) {
+    this._textarea.style.left = this.startX * this.ratio + 'px';
+    this._textarea.style.top = (this.startY - this.fontSize / 2) * this.ratio + 'px';
   }
   /**
    * event proxy
