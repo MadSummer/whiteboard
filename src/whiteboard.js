@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-09 15:30:21
+ * @Last Modified time: 2017-11-09 16:26:49
  */
 /**
  * @memberof WhiteBoard
@@ -232,7 +232,7 @@ class WhiteBoard {
     fabric.Object.prototype.exportKeyAttr = function () {
       var data = {
         stroke: this.stroke,
-        fill: this.fill,
+        fill: this.fill || '',
         strokeWidth: this.strokeWidth,
         id: this.id,
         type: this.type,
@@ -690,9 +690,9 @@ class WhiteBoard {
   _createObject(o) {
     switch (o.type) {
       case ALL_TYPE.line:
-        return new fabric.Line([o.x1, o.y1, o.x2, o.y2], {
+        return new fabric.Line([+o.x1, +o.y1, +o.x2, +o.y2], {
           stroke: o.stroke,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           radius: 90,
           strokeLineCap: o.storkeLineCap,
           id: o.id
@@ -700,24 +700,24 @@ class WhiteBoard {
         break;
       case ALL_TYPE.circle:
         return new fabric.Circle({
-          top: o.top,
-          left: o.left,
-          radius: o.radius,
+          top: +o.top,
+          left: +o.left,
+          radius: +o.radius,
           stroke: o.stroke,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           fill: o.fillColor,
           id: o.id
         })
         break;
       case ALL_TYPE.rect:
         return new fabric.Rect({
-          width: o.width,
-          height: o.height,
-          top: o.top,
-          left: o.left,
+          width: +o.width,
+          height: +o.height,
+          top: +o.top,
+          left: +o.left,
           stroke: o.stroke,
           strokeLineJoin: o.storkeLineCap,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           fill: o.fillColor,
           id: o.id
         })
@@ -725,7 +725,7 @@ class WhiteBoard {
       case ALL_TYPE.path:
         return new fabric.Path(o.path, {
           stroke: o.stroke,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           fill: o.fill,
           strokeLineCap: o.storkeLineCap,
           id: o.id
@@ -734,14 +734,14 @@ class WhiteBoard {
       case ALL_TYPE.text:
         return new fabric.Text(o.text, {
           stroke: o.stroke,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           fill: o.fill,
           strokeLineCap: o.storkeLineCap,
           id: o.id,
-          left: o.left,
-          top: o.top,
+          left: +o.left,
+          top: +o.top,
           fontFamily: o.fontFamily,
-          fontSize: o.fontSize,
+          fontSize: +o.fontSize,
           fontWeight: o.fontWeight
         })
       default:
