@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-09 15:19:02
+ * @Last Modified time: 2017-11-09 15:30:21
  */
 /**
  * @memberof WhiteBoard
@@ -441,7 +441,7 @@ var WhiteBoard = function () {
       var _loop = function _loop(prop) {
         if (_this._setting.hasOwnProperty(prop)) {
           var value = _this._setting[prop];
-          if (!value) {
+          if (value == undefined || value == null) {
             _this._setting[prop] = DEFAULT_CONFIG[prop];
             value = _this._setting[prop];
           }

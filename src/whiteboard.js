@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-09 15:19:02
+ * @Last Modified time: 2017-11-09 15:30:21
  */
 /**
  * @memberof WhiteBoard
@@ -338,7 +338,7 @@ class WhiteBoard {
     for (let prop in this._setting) {
       if (this._setting.hasOwnProperty(prop)) {
         let value = this._setting[prop];
-        if (!value) {
+        if (value == undefined || value == null) {
           this._setting[prop] = DEFAULT_CONFIG[prop];
           value = this._setting[prop];
         }
