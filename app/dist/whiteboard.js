@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-09 10:21:37
+ * @Last Modified time: 2017-11-09 15:19:02
  */
 /**
  * @memberof WhiteBoard
@@ -139,7 +139,8 @@ var All_EVT = {
   'object:removed': 'objectRemoved',
   'allObjects:removed': 'allObjectsRemoved',
   'path:created': 'pathCreated',
-  'clear': 'clear'
+  'clear': 'clear',
+  'destory': 'destory'
 };
 var ALL_FROM = {
   draw: 'draw', // object from _render
@@ -410,11 +411,15 @@ var WhiteBoard = function () {
        * 
        * @param {object} obj
        * @param {boolean} obj.removeBg
-       * 是否删除背景图
+       * removeBg
+       * @param {boolean} obj.notFire
+       * fire evt ?
        */
       fabric.Canvas.prototype.removeAllObjects = function (obj) {
         var objects = this.getObjects().slice();
-        this.fire('allObjects:removed', obj);
+        if (!obj || !obj.notFire) {
+          this.fire('allObjects:removed', obj);
+        }
         var backgroundImage = this.backgroundImage;
         this.clear();
         if (obj && !obj.removeBg && backgroundImage) {
@@ -436,7 +441,10 @@ var WhiteBoard = function () {
       var _loop = function _loop(prop) {
         if (_this._setting.hasOwnProperty(prop)) {
           var value = _this._setting[prop];
-          if (!value) _this._setting[prop] = DEFAULT_CONFIG[prop];
+          if (!value) {
+            _this._setting[prop] = DEFAULT_CONFIG[prop];
+            value = _this._setting[prop];
+          }
           Object.defineProperty(_this, prop, {
             get: function get() {
               return _this._setting[prop];
@@ -904,11 +912,12 @@ var WhiteBoard = function () {
   }, {
     key: 'remove',
     value: function remove(object) {
+      if (!object) return;
       if (typeof object.remove == 'function') {
         object.remove();
       }
-      if (object.id) {
-        var o = this.canvas.getItemById(object.id);
+      if (object.id || object) {
+        var o = this.canvas.getItemById(object.id || object);
         if (o) {
           o.from = ALL_FROM.out;
           o.remove();
@@ -1006,7 +1015,10 @@ var WhiteBoard = function () {
         this.beforeDestroy();
       }
       //clear objects
-      this.clear({ removeBg: true });
+      this.clear({
+        removeBg: true,
+        notFire: true
+      });
       var wrapperEl = this.canvas.wrapperEl;
       var upperCanvasEl = this.canvas.upperCanvasEl;
       var lowerCanvasEl = this.canvas.lowerCanvasEl;
@@ -1023,6 +1035,7 @@ var WhiteBoard = function () {
       }
       // remove wrapperEl
       wrapperEl.parentNode.removeChild(wrapperEl);
+      this.ep.fire(All_EVT.destory);
     }
   }, {
     key: 'getObjects',
