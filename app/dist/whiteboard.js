@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-08 15:51:08
+ * @Last Modified time: 2017-11-09 10:21:37
  */
 /**
  * @memberof WhiteBoard
@@ -205,7 +205,7 @@ var WhiteBoard = function () {
 
     /* polyfill for some browser */
     polyfill();
-    this._setting = Object.assign(DEFAULT_CONFIG, o);
+    this._setting = Object.assign({}, DEFAULT_CONFIG, o);
     this.undoList = [];
     this.redoList = [];
     this._init(o);
@@ -436,6 +436,7 @@ var WhiteBoard = function () {
       var _loop = function _loop(prop) {
         if (_this._setting.hasOwnProperty(prop)) {
           var value = _this._setting[prop];
+          if (!value) _this._setting[prop] = DEFAULT_CONFIG[prop];
           Object.defineProperty(_this, prop, {
             get: function get() {
               return _this._setting[prop];
