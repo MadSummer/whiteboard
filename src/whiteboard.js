@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-10 12:02:12
+ * @Last Modified time: 2017-11-10 16:11:17
  */
 /**
  * @memberof WhiteBoard
@@ -25,7 +25,6 @@ const DEFAULT_CONFIG = {
   strokeWidth: 2, // stroke line width
   stroke: 'red', // stroke line color
   fillColor: '', //  fill color
-  allowDrawing: true, // allow drawing
   selectable: false, // object can select, ensure this value is false at this version
   strokeLineCap: 'round', // line cap
   strokeLineJoin: 'round', // line join
@@ -33,6 +32,7 @@ const DEFAULT_CONFIG = {
   generateID: function () { // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
   },
+  cursor:cursor,
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 }
 const ALL_TYPE = {
@@ -42,7 +42,8 @@ const ALL_TYPE = {
   'line': 'line',
   'eraser': 'eraser',
   'clear': 'clear',
-  'text': 'text'
+  'text': 'text',
+  'disabled':'disabled'
 }
 const All_EVT = {
   'mouse:down': 'mousedown',
@@ -103,8 +104,6 @@ class WhiteBoard {
    * fontWeight
    * @param {string} [o.stroke=red]
    * stroke color
-   * @param {boolean} [o.allowDrawing=true]
-   * allow drawing
    * @param {string} [o.strokeLineCap=round]
    * strokeLineCap
    * @param {string} [o.strokeLineJoin=round]
@@ -353,7 +352,11 @@ class WhiteBoard {
             }
           }
         });
-        this[prop] = value;
+      }
+    }
+    for (let prop in this._setting) {
+      if (this._setting.hasOwnProperty(prop)) {
+        this[prop] =  this._setting[prop];
       }
     }
   }
@@ -383,18 +386,14 @@ class WhiteBoard {
         this.canvas.isDrawingMode = false;
         this.canvas.hoverCursor = 'default';
         this.canvas.defaultCursor = 'default';
-        // if path and allowDrawing,open isDrawingMode
-        if (value === ALL_TYPE.path && this.allowDrawing === true) {
+        // if path open isDrawingMode
+        if (value === ALL_TYPE.path) {
           this.canvas.isDrawingMode = true;
         }
-        // if  is eraser, set hover cursor
-        if (value === ALL_TYPE.eraser) {
-          this.canvas.hoverCursor = cursor.eraser;
-        }
+        // change cursor
+        this._changeCursorByType(value);
         // if is not text, disappear the textarea element
         if (value !== ALL_TYPE.text) this._textarea.style.display = 'none';
-        // if is text , set default cursor as text
-        if (value === ALL_TYPE.text) this.canvas.defaultCursor = 'text';
         break;
       case 'strokeWidth':
         this.canvas.freeDrawingBrush.width = parseInt(value) > 2 ? parseInt(value) : 2;
@@ -415,9 +414,6 @@ class WhiteBoard {
         } else {
           return false;
         }
-        break;
-      case 'allowDrawing':
-        this.canvas.isDrawingMode = (!!value && this.type === ALL_TYPE.path);
         break;
       case 'allowTouchScrolling':
         this.canvas.allowTouchScrolling = !!value;
@@ -759,9 +755,8 @@ class WhiteBoard {
    * @returns {undefined}
    */
   _renderWhenMouseMove() {
-    if (!this._setting.allowDrawing) return;
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type) return;
+    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type || ALL_TYPE.disabled === type) return;
     let ratio = this.ratio;
     let startX = this.startX * ratio;
     let startY = this.startY * ratio;
@@ -800,15 +795,30 @@ class WhiteBoard {
     }
     ctx.stroke();
   }
+
+/**
+ * 
+ * change cursor by type
+ * @param {string} type
+ * current type
+ */
+_changeCursorByType(type) {
+    if (type === ALL_TYPE.path) {
+      this.canvas.freeDrawingCursor = this.cursor.path;
+    } else {
+      this.canvas.hoverCursor = this.cursor[type] || 'default';
+      this.canvas.defaultCursor = this.cursor[type] || 'default';
+    }
+  }
+
   /**
    * render when mouse:up
    * @private
    * @return {undefined | fabric.Object}
    */
   _renderWhenMouseUp() {
-    if (!this._setting.allowDrawing) return;
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type) return;
+    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type || ALL_TYPE.disabled === type) return;
     let startX = this.startX;
     let startY = this.startY;
     let endX = this.endX;
@@ -1123,6 +1133,26 @@ class WhiteBoard {
    */
   getLastItem() {
     return this.canvas.getLastItem();
+  }
+  /**
+   * 
+   * set cursor
+   * @param {string} type 
+   * @param {string} cursor 
+   */
+  setCursor(type, cursor) {
+    if (type === ALL_TYPE.path) {
+      this.canvas.freeDrawingCursor = cursor;
+    }
+    if (arguments.length === 2) {
+      this.cursor[type] = cursor;
+    } else {
+      for (const type in this.cursor) {
+        if (this.cursor.hasOwnProperty(type)) {
+          this.cursor[type] = cursor;
+        }
+      }
+    }
   }
 }
 WhiteBoard.version = version;
