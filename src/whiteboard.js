@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-09 16:26:49
+ * @Last Modified time: 2017-11-10 12:02:12
  */
 /**
  * @memberof WhiteBoard
@@ -29,6 +29,7 @@ const DEFAULT_CONFIG = {
   selectable: false, // object can select, ensure this value is false at this version
   strokeLineCap: 'round', // line cap
   strokeLineJoin: 'round', // line join
+  allowTouchScrolling: true,// Indicates whether the browser can be scrolled when using a touchscreen and dragging on the canvas
   generateID: function () { // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
   },
@@ -417,6 +418,9 @@ class WhiteBoard {
         break;
       case 'allowDrawing':
         this.canvas.isDrawingMode = (!!value && this.type === ALL_TYPE.path);
+        break;
+      case 'allowTouchScrolling':
+        this.canvas.allowTouchScrolling = !!value;
         break;
       case 'selectable':
         fabric.Object.prototype.selectable = !!value;
@@ -994,7 +998,7 @@ class WhiteBoard {
       object.remove();
     }
     if (object.id || object) {
-      let o = this.canvas.getItemById(object.id || object) ;
+      let o = this.canvas.getItemById(object.id || object);
       if (o) {
         o.from = ALL_FROM.out;
         o.remove();
@@ -1003,11 +1007,11 @@ class WhiteBoard {
   }
 
   /**
-   * @param {string} url
-   * the url of the background image
+   * @param {string | Element} img
+   * the url of the background image or the img element 
    */
-  loadBackgroundImage(url) {
-    this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(this.canvas), {
+  loadBackgroundImage(img) {
+    this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas), {
       alignX: 'center',
       alignY: 'center',
       width: this.originalWidth,
