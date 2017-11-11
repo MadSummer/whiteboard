@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-10 16:11:17
+ * @Last Modified time: 2017-11-11 14:49:55
  */
 /**
  * @memberof WhiteBoard
@@ -385,7 +385,7 @@ var WhiteBoard = function () {
        * @returns
        * fabric object or null
        */
-      fabric.Canvas.prototype.getItemById = function (id) {
+      fabric.Canvas.prototype.getObjectById = function (id) {
         var object = null;
         var objects = this.getObjects();
         for (var i = 0; i < this.size(); i++) {
@@ -401,7 +401,7 @@ var WhiteBoard = function () {
        * get the last item object
        * @returns {Object}
        */
-      fabric.Canvas.prototype.getLastItem = function () {
+      fabric.Canvas.prototype.getLastObject = function () {
 
         var objects = this.getObjects();
 
@@ -744,7 +744,7 @@ var WhiteBoard = function () {
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       var object = null;
       if (type === ALL_TYPE.path) {
-        return this.canvas.getLastItem();
+        return this.canvas.getLastObject();
       }
       var o = (_o = {
         type: type,
@@ -859,6 +859,8 @@ var WhiteBoard = function () {
      * export render interface
      * @param {Object} o
      * the object 
+     * @return {boolean} 
+     * Indicates whether add success
      */
 
   }, {
@@ -866,8 +868,10 @@ var WhiteBoard = function () {
     value: function render(opt) {
       var object = this._createObject(opt);
       if (object) {
+        if (this.canvas.getObjectById(object.id)) return false;
         object.from = ALL_FROM.out;
         this.canvas.add(object);
+        return true;
       }
     }
     /**
@@ -934,7 +938,7 @@ var WhiteBoard = function () {
         object.remove();
       }
       if (object.id || object) {
-        var o = this.canvas.getItemById(object.id || object);
+        var o = this.canvas.getObjectById(object.id || object);
         if (o) {
           o.from = ALL_FROM.out;
           o.remove();
@@ -1071,9 +1075,9 @@ var WhiteBoard = function () {
      */
 
   }, {
-    key: 'getItemById',
-    value: function getItemById(id) {
-      return this.canvas.getItemById(id);
+    key: 'getObjectById',
+    value: function getObjectById(id) {
+      return this.canvas.getObjectById(id);
     }
     /**
      * get last object
@@ -1081,9 +1085,9 @@ var WhiteBoard = function () {
      */
 
   }, {
-    key: 'getLastItem',
-    value: function getLastItem() {
-      return this.canvas.getLastItem();
+    key: 'getLastObject',
+    value: function getLastObject() {
+      return this.canvas.getLastObject();
     }
     /**
      * 

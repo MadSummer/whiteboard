@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-10 16:11:17
+ * @Last Modified time: 2017-11-11 14:49:55
  */
 /**
  * @memberof WhiteBoard
@@ -286,7 +286,7 @@ class WhiteBoard {
      * @returns
      * fabric object or null
      */
-    fabric.Canvas.prototype.getItemById = function (id) {
+    fabric.Canvas.prototype.getObjectById = function (id) {
       let object = null;
       let objects = this.getObjects();
       for (let i = 0; i < this.size(); i++) {
@@ -302,7 +302,7 @@ class WhiteBoard {
      * get the last item object
      * @returns {Object}
      */
-    fabric.Canvas.prototype.getLastItem = function () {
+    fabric.Canvas.prototype.getLastObject = function () {
 
       let objects = this.getObjects();
 
@@ -836,7 +836,7 @@ _changeCursorByType(type) {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let object = null;
     if (type === ALL_TYPE.path) {
-      return this.canvas.getLastItem();
+      return this.canvas.getLastObject();
     }
     let o = {
       type: type,
@@ -945,12 +945,16 @@ _changeCursorByType(type) {
    * export render interface
    * @param {Object} o
    * the object 
+   * @return {boolean} 
+   * Indicates whether add success
    */
   render(opt) {
     let object = this._createObject(opt);
     if (object) {
+      if (this.canvas.getObjectById(object.id)) return false;
       object.from = ALL_FROM.out;
       this.canvas.add(object);
+      return true;
     }
   }
   /**
@@ -1008,7 +1012,7 @@ _changeCursorByType(type) {
       object.remove();
     }
     if (object.id || object) {
-      let o = this.canvas.getItemById(object.id || object);
+      let o = this.canvas.getObjectById(object.id || object);
       if (o) {
         o.from = ALL_FROM.out;
         o.remove();
@@ -1124,15 +1128,15 @@ _changeCursorByType(type) {
    * @param {string} id 
    *  object id
    */
-  getItemById(id) {
-    return this.canvas.getItemById(id);
+  getObjectById(id) {
+    return this.canvas.getObjectById(id);
   }
   /**
    * get last object
    * 
    */
-  getLastItem() {
-    return this.canvas.getLastItem();
+  getLastObject() {
+    return this.canvas.getLastObject();
   }
   /**
    * 
