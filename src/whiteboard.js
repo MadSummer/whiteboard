@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-11 14:49:55
+ * @Last Modified time: 2017-11-13 13:37:54
  */
 /**
  * @memberof WhiteBoard
@@ -32,7 +32,7 @@ const DEFAULT_CONFIG = {
   generateID: function () { // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
   },
-  cursor:cursor,
+  cursor: cursor,
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 }
 const ALL_TYPE = {
@@ -43,7 +43,7 @@ const ALL_TYPE = {
   'eraser': 'eraser',
   'clear': 'clear',
   'text': 'text',
-  'disabled':'disabled'
+  'disabled': 'disabled'
 }
 const All_EVT = {
   'mouse:down': 'mousedown',
@@ -356,7 +356,7 @@ class WhiteBoard {
     }
     for (let prop in this._setting) {
       if (this._setting.hasOwnProperty(prop)) {
-        this[prop] =  this._setting[prop];
+        this[prop] = this._setting[prop];
       }
     }
   }
@@ -796,13 +796,13 @@ class WhiteBoard {
     ctx.stroke();
   }
 
-/**
- * 
- * change cursor by type
- * @param {string} type
- * current type
- */
-_changeCursorByType(type) {
+  /**
+   * 
+   * change cursor by type
+   * @param {string} type
+   * current type
+   */
+  _changeCursorByType(type) {
     if (type === ALL_TYPE.path) {
       this.canvas.freeDrawingCursor = this.cursor.path;
     } else {
@@ -1010,6 +1010,7 @@ _changeCursorByType(type) {
     if (!object) return;
     if (typeof object.remove == 'function') {
       object.remove();
+      return;
     }
     if (object.id || object) {
       let o = this.canvas.getObjectById(object.id || object);

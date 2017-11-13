@@ -6,7 +6,7 @@
     "dev": "webpack-dev-server",
     "socket": "node ./src/socket.js",
     "bulid": "webpack",
-    "demo": "npm-run-all --parallel bulid socket dev",
+    "demo": "npm-run-all --parallel bulid socket dev jsdoc",
     "jsdoc": "jsdoc ./src/ -d ./app/public/out"
   },
   "dependencies": {},

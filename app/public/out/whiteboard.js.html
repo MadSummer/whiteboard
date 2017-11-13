@@ -26,11 +26,12 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>/**
+            <pre class="prettyprint source linenums"><code>
+/**
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-03 15:59:59
+ * @Last Modified time: 2017-11-11 14:49:55
  */
 /**
  * @memberof WhiteBoard
@@ -48,17 +49,18 @@ const DEFAULT_CONFIG = {
   type: 'path', // default draw type
   fontSize: 24, // font size
   fontFamily: 'Microsoft Yahei',
-  fontWeight:'normal',
+  fontWeight: 'normal',
   strokeWidth: 2, // stroke line width
   stroke: 'red', // stroke line color
   fillColor: '', //  fill color
-  allowDrawing: true, // allow drawing
   selectable: false, // object can select, ensure this value is false at this version
   strokeLineCap: 'round', // line cap
   strokeLineJoin: 'round', // line join
+  allowTouchScrolling: true,// Indicates whether the browser can be scrolled when using a touchscreen and dragging on the canvas
   generateID: function () { // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
   },
+  cursor:cursor,
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 }
 const ALL_TYPE = {
@@ -68,7 +70,8 @@ const ALL_TYPE = {
   'line': 'line',
   'eraser': 'eraser',
   'clear': 'clear',
-  'text': 'text'
+  'text': 'text',
+  'disabled':'disabled'
 }
 const All_EVT = {
   'mouse:down': 'mousedown',
@@ -81,7 +84,8 @@ const All_EVT = {
   'object:removed': 'objectRemoved',
   'allObjects:removed': 'allObjectsRemoved',
   'path:created': 'pathCreated',
-  'clear': 'clear'
+  'clear': 'clear',
+  'destory': 'destory'
 }
 const ALL_FROM = {
   draw: 'draw', // object from _render
@@ -128,19 +132,20 @@ class WhiteBoard {
    * fontWeight
    * @param {string} [o.stroke=red]
    * stroke color
-   * @param {boolean} [o.allowDrawing=true]
-   * allow drawing
    * @param {string} [o.strokeLineCap=round]
    * strokeLineCap
    * @param {string} [o.strokeLineJoin=round]
    * strokeLineJoin
+   * @param {string} o.backgroundImage
+   * backgroundImage
    * @param {function} [o.generateID=function () {return new Date().getTime() + Math.floor(Math.random() * 100);}]
+   *  object id generate function
    */
 
   constructor(o) {
     /* polyfill for some browser */
     polyfill();
-    this._setting = Object.assign(DEFAULT_CONFIG, o);
+    this._setting = Object.assign({}, DEFAULT_CONFIG, o);
     this.undoList = [];
     this.redoList = [];
     this._init(o);
@@ -202,16 +207,16 @@ class WhiteBoard {
       if (!text) return this.style.display = 'none';
       let object = self._createObject({
         type: ALL_TYPE.text,
-        left: parseFloat(this.style.left),
-        top: parseFloat(this.style.top),
-        fill:self.fillColor || self.stroke,
+        left: parseFloat(this.style.left) / self.ratio,
+        top: parseFloat(this.style.top) / self.ratio,
+        fill: self.fillColor || self.stroke,
         stroke: self.stroke,
         strokeWidth: self.strokeWidth,
         fontSize: self.fontSize,
         fontFamily: self.fontFamily,
-        fontWeight:self.fontWeight,
+        fontWeight: self.fontWeight,
         text: text,
-        id:self.generateID()
+        id: self.generateID()
       });
       self.canvas.add(object);
       this.value = '';
@@ -255,7 +260,7 @@ class WhiteBoard {
     fabric.Object.prototype.exportKeyAttr = function () {
       var data = {
         stroke: this.stroke,
-        fill: this.fill,
+        fill: this.fill || '',
         strokeWidth: this.strokeWidth,
         id: this.id,
         type: this.type,
@@ -309,7 +314,7 @@ class WhiteBoard {
      * @returns
      * fabric object or null
      */
-    fabric.Canvas.prototype.getItemById = function (id) {
+    fabric.Canvas.prototype.getObjectById = function (id) {
       let object = null;
       let objects = this.getObjects();
       for (let i = 0; i &lt; this.size(); i++) {
@@ -325,7 +330,7 @@ class WhiteBoard {
      * get the last item object
      * @returns {Object}
      */
-    fabric.Canvas.prototype.getLastItem = function () {
+    fabric.Canvas.prototype.getLastObject = function () {
 
       let objects = this.getObjects();
 
@@ -336,14 +341,18 @@ class WhiteBoard {
      * 
      * @param {object} obj
      * @param {boolean} obj.removeBg
-     * 是否删除背景图
+     * removeBg
+     * @param {boolean} obj.notFire
+     * fire evt ?
      */
     fabric.Canvas.prototype.removeAllObjects = function (obj) {
       let objects = this.getObjects().slice();
-      this.fire('allObjects:removed', obj);
+      if (!obj || !obj.notFire) {
+        this.fire('allObjects:removed', obj);
+      }
       let backgroundImage = this.backgroundImage;
       this.clear();
-      if (!obj.removeBg &amp;&amp; backgroundImage) {
+      if (obj &amp;&amp; !obj.removeBg &amp;&amp; backgroundImage) {
         this.setBackgroundImage(backgroundImage, this.renderAll.bind(this));
       }
     };
@@ -357,6 +366,10 @@ class WhiteBoard {
     for (let prop in this._setting) {
       if (this._setting.hasOwnProperty(prop)) {
         let value = this._setting[prop];
+        if (value == undefined || value == null) {
+          this._setting[prop] = DEFAULT_CONFIG[prop];
+          value = this._setting[prop];
+        }
         Object.defineProperty(this, prop, {
           get: () => {
             return this._setting[prop];
@@ -367,7 +380,11 @@ class WhiteBoard {
             }
           }
         });
-        this[prop] = value;
+      }
+    }
+    for (let prop in this._setting) {
+      if (this._setting.hasOwnProperty(prop)) {
+        this[prop] =  this._setting[prop];
       }
     }
   }
@@ -397,18 +414,14 @@ class WhiteBoard {
         this.canvas.isDrawingMode = false;
         this.canvas.hoverCursor = 'default';
         this.canvas.defaultCursor = 'default';
-        // if path and allowDrawing,open isDrawingMode
-        if (value === ALL_TYPE.path &amp;&amp; this.allowDrawing === true) {
+        // if path open isDrawingMode
+        if (value === ALL_TYPE.path) {
           this.canvas.isDrawingMode = true;
         }
-        // if  is eraser, set hover cursor
-        if (value === ALL_TYPE.eraser) {
-          this.canvas.hoverCursor = cursor.eraser;
-        }
+        // change cursor
+        this._changeCursorByType(value);
         // if is not text, disappear the textarea element
         if (value !== ALL_TYPE.text) this._textarea.style.display = 'none';
-        // if is text , set default cursor as text
-        if (value === ALL_TYPE.text) this.canvas.defaultCursor = 'text';
         break;
       case 'strokeWidth':
         this.canvas.freeDrawingBrush.width = parseInt(value) > 2 ? parseInt(value) : 2;
@@ -430,11 +443,14 @@ class WhiteBoard {
           return false;
         }
         break;
-      case 'allowDrawing':
-        this.canvas.isDrawingMode = !!value;
+      case 'allowTouchScrolling':
+        this.canvas.allowTouchScrolling = !!value;
         break;
       case 'selectable':
         fabric.Object.prototype.selectable = !!value;
+        break;
+      case 'backgroundImage':
+        this.loadBackgroundImage(value);
         break;
       default:
         break;
@@ -453,6 +469,7 @@ class WhiteBoard {
      * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mousedown: function (opt) {
+      if (opt.e.button === 2) return;
       // set start pointer
       let pointer = this.canvas.getPointer(opt.e)
       this.set({
@@ -469,10 +486,9 @@ class WhiteBoard {
       if (this.type === ALL_TYPE.text) {
         if (this._textarea.style.display === 'block') return;
         this._textarea.style.display = 'block';
-        this._textarea.style.left = this.startX + 'px';
-        this._textarea.style.top = this.startY - this.fontSize / 2 + 'px';
+        this.setTextareaPosition();
         var self = this;
-        setTimeout(function() {
+        setTimeout(function () {
           self._textarea.focus();
         }, 0);
       }
@@ -494,6 +510,7 @@ class WhiteBoard {
      * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mouseup: function (opt) {
+      if (opt.e.button === 2) return;
       //set end point
       let pointer = this.canvas.getPointer(opt.e)
       this.set({
@@ -701,9 +718,9 @@ class WhiteBoard {
   _createObject(o) {
     switch (o.type) {
       case ALL_TYPE.line:
-        return new fabric.Line([o.x1, o.y1, o.x2, o.y2], {
+        return new fabric.Line([+o.x1, +o.y1, +o.x2, +o.y2], {
           stroke: o.stroke,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           radius: 90,
           strokeLineCap: o.storkeLineCap,
           id: o.id
@@ -711,24 +728,24 @@ class WhiteBoard {
         break;
       case ALL_TYPE.circle:
         return new fabric.Circle({
-          top: o.top,
-          left: o.left,
-          radius: o.radius,
+          top: +o.top,
+          left: +o.left,
+          radius: +o.radius,
           stroke: o.stroke,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           fill: o.fillColor,
           id: o.id
         })
         break;
       case ALL_TYPE.rect:
         return new fabric.Rect({
-          width: o.width,
-          height: o.height,
-          top: o.top,
-          left: o.left,
+          width: +o.width,
+          height: +o.height,
+          top: +o.top,
+          left: +o.left,
           stroke: o.stroke,
           strokeLineJoin: o.storkeLineCap,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           fill: o.fillColor,
           id: o.id
         })
@@ -736,7 +753,7 @@ class WhiteBoard {
       case ALL_TYPE.path:
         return new fabric.Path(o.path, {
           stroke: o.stroke,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           fill: o.fill,
           strokeLineCap: o.storkeLineCap,
           id: o.id
@@ -745,14 +762,14 @@ class WhiteBoard {
       case ALL_TYPE.text:
         return new fabric.Text(o.text, {
           stroke: o.stroke,
-          strokeWidth: o.strokeWidth,
+          strokeWidth: +o.strokeWidth,
           fill: o.fill,
           strokeLineCap: o.storkeLineCap,
           id: o.id,
-          left: o.left,
-          top: o.top,
+          left: +o.left,
+          top: +o.top,
           fontFamily: o.fontFamily,
-          fontSize: o.fontSize,
+          fontSize: +o.fontSize,
           fontWeight: o.fontWeight
         })
       default:
@@ -766,9 +783,8 @@ class WhiteBoard {
    * @returns {undefined}
    */
   _renderWhenMouseMove() {
-    if (!this._setting.allowDrawing) return;
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type) return;
+    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type || ALL_TYPE.disabled === type) return;
     let ratio = this.ratio;
     let startX = this.startX * ratio;
     let startY = this.startY * ratio;
@@ -807,15 +823,30 @@ class WhiteBoard {
     }
     ctx.stroke();
   }
+
+/**
+ * 
+ * change cursor by type
+ * @param {string} type
+ * current type
+ */
+_changeCursorByType(type) {
+    if (type === ALL_TYPE.path) {
+      this.canvas.freeDrawingCursor = this.cursor.path;
+    } else {
+      this.canvas.hoverCursor = this.cursor[type] || 'default';
+      this.canvas.defaultCursor = this.cursor[type] || 'default';
+    }
+  }
+
   /**
    * render when mouse:up
    * @private
    * @return {undefined | fabric.Object}
    */
   _renderWhenMouseUp() {
-    if (!this._setting.allowDrawing) return;
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type) return;
+    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type || ALL_TYPE.disabled === type) return;
     let startX = this.startX;
     let startY = this.startY;
     let endX = this.endX;
@@ -833,7 +864,7 @@ class WhiteBoard {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     let object = null;
     if (type === ALL_TYPE.path) {
-      return this.canvas.getLastItem();
+      return this.canvas.getLastObject();
     }
     let o = {
       type: type,
@@ -942,12 +973,16 @@ class WhiteBoard {
    * export render interface
    * @param {Object} o
    * the object 
+   * @return {boolean} 
+   * Indicates whether add success
    */
   render(opt) {
     let object = this._createObject(opt);
     if (object) {
+      if (this.canvas.getObjectById(object.id)) return false;
       object.from = ALL_FROM.out;
       this.canvas.add(object);
+      return true;
     }
   }
   /**
@@ -1000,11 +1035,12 @@ class WhiteBoard {
    * fabric object's id
    */
   remove(object) {
+    if (!object) return;
     if (typeof object.remove == 'function') {
       object.remove();
     }
-    if (object.id) {
-      let o = this.canvas.getItemById(object.id);
+    if (object.id || object) {
+      let o = this.canvas.getObjectById(object.id || object);
       if (o) {
         o.from = ALL_FROM.out;
         o.remove();
@@ -1013,11 +1049,11 @@ class WhiteBoard {
   }
 
   /**
-   * @param {string} url
-   * the url of the background image
+   * @param {string | Element} img
+   * the url of the background image or the img element 
    */
-  loadBackgroundImage(url) {
-    this.canvas.setBackgroundImage(url, this.canvas.renderAll.bind(wb.canvas), {
+  loadBackgroundImage(img) {
+    this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas), {
       alignX: 'center',
       alignY: 'center',
       width: this.originalWidth,
@@ -1033,6 +1069,18 @@ class WhiteBoard {
    */
   resize(ratio) {
     return this.set('ratio', ratio);
+  }
+  /**
+   * 
+   * set textarea position
+   * @param {number} [left=this.startX * this.ratio]
+   * offset left
+   * @param {number} [top=(this.startY - this.fontSize / 2) * this.ratio]
+   * offset top
+   */
+  setTextareaPosition(left, top) {
+    this._textarea.style.left = this.startX * this.ratio + 'px';
+    this._textarea.style.top = (this.startY - this.fontSize / 2) * this.ratio + 'px';
   }
   /**
    * event proxy
@@ -1068,6 +1116,76 @@ class WhiteBoard {
       this.set(obj);
     }
   }
+  destory() {
+    if (typeof this.beforeDestroy === 'function') {
+      this.beforeDestroy();
+    }
+    //clear objects
+    this.clear({
+      removeBg: true,
+      notFire: true
+    });
+    var wrapperEl = this.canvas.wrapperEl;
+    var upperCanvasEl = this.canvas.upperCanvasEl;
+    var lowerCanvasEl = this.canvas.lowerCanvasEl;
+    // reset canvas style and class
+    lowerCanvasEl.setAttribute('style', '');
+    lowerCanvasEl.classList.remove('lower-canvas');
+    // remove upperCanvasEl
+    wrapperEl.removeChild(upperCanvasEl);
+    // remove lowerCanvasEl
+    wrapperEl.removeChild(lowerCanvasEl);
+    // add lowerCanvasEl 
+    if (wrapperEl.parentNode) {
+      wrapperEl.parentNode.insertBefore(lowerCanvasEl, wrapperEl.nextSibling);
+    }
+    // remove wrapperEl
+    wrapperEl.parentNode.removeChild(wrapperEl);
+    this.ep.fire(All_EVT.destory);
+  }
+  getObjects() {
+    const arr = [];
+    this.canvas.getObjects().forEach(obj => {
+      arr.push(obj.exportKeyAttr())
+    });
+    return arr
+  }
+  /**
+   * 
+   * get item by id
+   * @param {string} id 
+   *  object id
+   */
+  getObjectById(id) {
+    return this.canvas.getObjectById(id);
+  }
+  /**
+   * get last object
+   * 
+   */
+  getLastObject() {
+    return this.canvas.getLastObject();
+  }
+  /**
+   * 
+   * set cursor
+   * @param {string} type 
+   * @param {string} cursor 
+   */
+  setCursor(type, cursor) {
+    if (type === ALL_TYPE.path) {
+      this.canvas.freeDrawingCursor = cursor;
+    }
+    if (arguments.length === 2) {
+      this.cursor[type] = cursor;
+    } else {
+      for (const type in this.cursor) {
+        if (this.cursor.hasOwnProperty(type)) {
+          this.cursor[type] = cursor;
+        }
+      }
+    }
+  }
 }
 WhiteBoard.version = version;
 global.WhiteBoard = WhiteBoard;
@@ -1087,7 +1205,7 @@ module.exports = WhiteBoard;</code></pre>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Nov 03 2017 16:27:44 GMT+0800 (中国标准时间)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Nov 13 2017 11:58:10 GMT+0800 (中国标准时间)
 </footer>
 
 <script> prettyPrint(); </script>
