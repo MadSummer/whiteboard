@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-14 14:11:06
+ * @Last Modified time: 2017-11-14 14:15:59
  */
 /**
  * @memberof WhiteBoard
@@ -117,7 +117,7 @@ var DEFAULT_CONFIG = {
     // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
   },
-  maxObjects: 2, // canvas max objects
+  maxObjects: 200, // canvas max objects
   cursor: cursor,
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 };
@@ -280,7 +280,7 @@ var WhiteBoard = function () {
       });
       textarea.addEventListener('blur', function (e) {
         e.stopPropagation();
-        if (self.type !== ALL_TYPE.text) {
+        if (self.type !== ALL_TYPE.text || self.getObjects().length >= self.maxObjects) {
           this.value = '';
           this.style.display = 'none';
           return;
@@ -746,7 +746,7 @@ var WhiteBoard = function () {
       var _o;
 
       var type = this.type;
-      if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type || ALL_TYPE.disabled === type || this.getObjects().length > this.maxObjects) return;
+      if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type || ALL_TYPE.disabled === type || this.getObjects().length >= this.maxObjects) return;
       var startX = this.startX;
       var startY = this.startY;
       var endX = this.endX;
