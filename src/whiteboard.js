@@ -3,7 +3,7 @@
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-13 13:37:54
+ * @Last Modified time: 2017-11-14 14:11:06
  */
 /**
  * @memberof WhiteBoard
@@ -32,6 +32,7 @@ const DEFAULT_CONFIG = {
   generateID: function () { // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
   },
+  maxObjects: 2, // canvas max objects
   cursor: cursor,
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 }
@@ -57,7 +58,9 @@ const All_EVT = {
   'allObjects:removed': 'allObjectsRemoved',
   'path:created': 'pathCreated',
   'clear': 'clear',
-  'destory': 'destory'
+  'destory': 'destory',
+  'textarea:input': 'textareaInput',
+  'textarea:focus': 'textareaFocus'
 }
 const ALL_FROM = {
   draw: 'draw', // object from _render
@@ -172,9 +175,20 @@ class WhiteBoard {
     textarea.style.position = 'absolute';
     textarea.style.left = 0;
     textarea.style.top = 0;
+    textarea.style.color = this.stroke;
+    textarea.addEventListener('focus', function (e) {
+      e.stopPropagation();
+      self.ep.fire(All_EVT['textarea:focus'], {
+        target: this
+      });
+    });
     textarea.addEventListener('blur', function (e) {
       e.stopPropagation();
-      if (self.type !== ALL_TYPE.text) return this.style.display = 'none';
+      if (self.type !== ALL_TYPE.text) {
+        this.value = '';
+        this.style.display = 'none';
+        return;
+      }
       let text = this.value.trim();
       if (!text) return this.style.display = 'none';
       let object = self._createObject({
@@ -194,6 +208,12 @@ class WhiteBoard {
       this.value = '';
       this.style.display = 'none';
     });
+    textarea.addEventListener('input', function (e) {
+      e.stopPropagation();
+      self.ep.fire(All_EVT['textarea:input'], {
+        target: this
+      });
+    })
     textarea.addEventListener('mousedown', function (e) {
       e.stopPropagation();
     }, false);
@@ -443,7 +463,7 @@ class WhiteBoard {
     mousedown: function (opt) {
       if (opt.e.button === 2) return;
       // set start pointer
-      let pointer = this.canvas.getPointer(opt.e)
+      let pointer = this.canvas.getPointer(opt.e);
       this.set({
         startX: pointer.x,
         startY: pointer.y,
@@ -510,8 +530,20 @@ class WhiteBoard {
      * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mousemove: function (opt) {
+      if (this.getObjects().length >= this.maxObjects) {
+        if (this.type === ALL_TYPE.path) {
+          this.canvas.isDrawingMode = false;
+          this.canvas.hoverCursor = this.cursor[ALL_TYPE.path];
+          this.canvas.defaultCursor = this.cursor[ALL_TYPE.path];
+        }
+      } else {
+        if (this.type === ALL_TYPE.path) {
+          this.canvas.isDrawingMode = true;
+        }
+      }
       // if is not mousedown, do nothing
       if (!this.isMouseDown) return;
+
       // set end point
       let pointer = this.canvas.getPointer(opt.e);
       this.set({
@@ -756,7 +788,13 @@ class WhiteBoard {
    */
   _renderWhenMouseMove() {
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type || ALL_TYPE.disabled === type) return;
+    if (
+      ALL_TYPE[type] === undefined ||
+      ALL_TYPE.eraser === type ||
+      ALL_TYPE.path === type ||
+      ALL_TYPE.disabled === type ||
+      this.getObjects().length >= this.maxObjects
+    ) return;
     let ratio = this.ratio;
     let startX = this.startX * ratio;
     let startY = this.startY * ratio;
@@ -818,7 +856,13 @@ class WhiteBoard {
    */
   _renderWhenMouseUp() {
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type || ALL_TYPE.disabled === type) return;
+    if (
+      ALL_TYPE[type] === undefined ||
+      ALL_TYPE.eraser === type ||
+      ALL_TYPE.text === type ||
+      ALL_TYPE.disabled === type ||
+      this.getObjects().length > this.maxObjects
+    ) return;
     let startX = this.startX;
     let startY = this.startY;
     let endX = this.endX;
@@ -948,7 +992,7 @@ class WhiteBoard {
    * @return {boolean} 
    * Indicates whether add success
    */
-  render(opt) {
+  render(opt, fireEVt) {
     let object = this._createObject(opt);
     if (object) {
       if (this.canvas.getObjectById(object.id)) return false;
@@ -1009,6 +1053,7 @@ class WhiteBoard {
   remove(object) {
     if (!object) return;
     if (typeof object.remove == 'function') {
+      object.from = ALL_FROM.out;
       object.remove();
       return;
     }
@@ -1054,6 +1099,24 @@ class WhiteBoard {
   setTextareaPosition(left, top) {
     this._textarea.style.left = this.startX * this.ratio + 'px';
     this._textarea.style.top = (this.startY - this.fontSize / 2) * this.ratio + 'px';
+  }
+  /**
+   * 
+   * set textarea style
+   * @param {object} obj 
+   */
+  setTextareaStyle(obj) {
+    if (!obj) return;
+    if (arguments.length == 1) {
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const element = obj[key];
+          this._textarea.style[key] = element;
+        }
+      }
+    } else {
+      this._textarea.style[arguments[0]] = arguments[1];
+    }
   }
   /**
    * event proxy

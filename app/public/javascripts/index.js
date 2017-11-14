@@ -56,6 +56,11 @@ $(document).ready(function () {
       action: 'clear'
     })
   });
+  wb.ep.on('textareaInput', function (obj) {
+    var textarea = obj.target;
+    var value = textarea.value
+    wb.setTextareaStyle('width', value.length * wb.fontSize + 10 + 'px');
+  });
   // 注册事件
   $('#drawController').on('click', function (e) {
     var type = $(e.target).attr('data-type');
