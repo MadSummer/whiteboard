@@ -26,12 +26,14 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>
+            <pre class="prettyprint source linenums"><code>import { Number } from 'core-js/library/web/timers';
+
+
 /**
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-14 11:30:59
+ * @Last Modified time: 2017-11-16 10:17:27
  */
 /**
  * @memberof WhiteBoard
@@ -60,6 +62,7 @@ const DEFAULT_CONFIG = {
   generateID: function () { // generate the id of object
     return new Date().getTime() + Math.floor(Math.random() * 100);
   },
+  maxObjects: 200, // canvas max objects
   cursor: cursor,
   maxSize: 4096 //the max width or max height of the canvas element @see https://stackoverflow.com/questions/6081483/maximum-size-of-a-canvas-element
 }
@@ -85,7 +88,9 @@ const All_EVT = {
   'allObjects:removed': 'allObjectsRemoved',
   'path:created': 'pathCreated',
   'clear': 'clear',
-  'destory': 'destory'
+  'destory': 'destory',
+  'textarea:input': 'textareaInput',
+  'textarea:focus': 'textareaFocus'
 }
 const ALL_FROM = {
   draw: 'draw', // object from _render
@@ -184,6 +189,19 @@ class WhiteBoard {
 
     // getter and setter  
     this._defineSetter();
+
+    // add listener
+    this._addEventListener();
+  }
+  /**
+   * add some event listener
+   * 
+   */
+  _addEventListener() {
+    let self = this;
+    doc.body.addEventListener('mouseup', function (e) {
+      if (e.target !== this.canvas.upperCanvasEl) self.set('isMouseDown', false);
+    });
   }
   /**
    * 
@@ -203,11 +221,17 @@ class WhiteBoard {
     textarea.style.color = this.stroke;
     textarea.addEventListener('focus', function (e) {
       e.stopPropagation();
-      this.style.color = self.stroke;
-    })
+      self.ep.fire(All_EVT['textarea:focus'], {
+        target: this
+      });
+    });
     textarea.addEventListener('blur', function (e) {
       e.stopPropagation();
-      if (self.type !== ALL_TYPE.text) return this.style.display = 'none';
+      if (self.type !== ALL_TYPE.text || self.getObjects().length >= self.maxObjects) {
+        this.value = '';
+        this.style.display = 'none';
+        return;
+      }
       let text = this.value.trim();
       if (!text) return this.style.display = 'none';
       let object = self._createObject({
@@ -227,6 +251,12 @@ class WhiteBoard {
       this.value = '';
       this.style.display = 'none';
     });
+    textarea.addEventListener('input', function (e) {
+      e.stopPropagation();
+      self.ep.fire(All_EVT['textarea:input'], {
+        target: this
+      });
+    })
     textarea.addEventListener('mousedown', function (e) {
       e.stopPropagation();
     }, false);
@@ -290,7 +320,7 @@ class WhiteBoard {
           data.left = this.left;
           break;
         case ALL_TYPE.path:
-          data.path = this.path.join(' ').replace(/,/g, ' ');
+          data.path = this.path.join(' ').replace(/,/g, ' ').replace(/(\.[0-9]{2})[0-9]*/g,'');
           data.height = this.height;
           data.top = this.top;
           data.left = this.left;
@@ -476,7 +506,7 @@ class WhiteBoard {
     mousedown: function (opt) {
       if (opt.e.button === 2) return;
       // set start pointer
-      let pointer = this.canvas.getPointer(opt.e)
+      let pointer = this.canvas.getPointer(opt.e);
       this.set({
         startX: pointer.x,
         startY: pointer.y,
@@ -543,8 +573,20 @@ class WhiteBoard {
      * @see http://fabricjs.com/docs/fabric.Canvas.html
      */
     mousemove: function (opt) {
+      if (this.getObjects().length >= this.maxObjects) {
+        if (this.type === ALL_TYPE.path) {
+          this.canvas.isDrawingMode = false;
+          this.canvas.hoverCursor = this.cursor[ALL_TYPE.path];
+          this.canvas.defaultCursor = this.cursor[ALL_TYPE.path];
+        }
+      } else {
+        if (this.type === ALL_TYPE.path) {
+          this.canvas.isDrawingMode = true;
+        }
+      }
       // if is not mousedown, do nothing
       if (!this.isMouseDown) return;
+
       // set end point
       let pointer = this.canvas.getPointer(opt.e);
       this.set({
@@ -727,7 +769,7 @@ class WhiteBoard {
           stroke: o.stroke,
           strokeWidth: +o.strokeWidth,
           radius: 90,
-          strokeLineCap: o.storkeLineCap,
+          strokeLineCap: o.storkeLineCap || this.strokeLineCap,
           id: o.id
         })
         break;
@@ -749,7 +791,7 @@ class WhiteBoard {
           top: +o.top,
           left: +o.left,
           stroke: o.stroke,
-          strokeLineJoin: o.storkeLineCap,
+          strokeLineJoin: o.storkeLineCap || this.strokeLineCap,
           strokeWidth: +o.strokeWidth,
           fill: o.fillColor,
           id: o.id
@@ -760,7 +802,7 @@ class WhiteBoard {
           stroke: o.stroke,
           strokeWidth: +o.strokeWidth,
           fill: o.fill,
-          strokeLineCap: o.storkeLineCap,
+          strokeLineCap: o.storkeLineCap || this.strokeLineCap,
           id: o.id
         })
         break;
@@ -769,7 +811,7 @@ class WhiteBoard {
           stroke: o.stroke,
           strokeWidth: +o.strokeWidth,
           fill: o.fill,
-          strokeLineCap: o.storkeLineCap,
+          strokeLineCap: o.storkeLineCap || this.strokeLineCap,
           id: o.id,
           left: +o.left,
           top: +o.top,
@@ -789,7 +831,13 @@ class WhiteBoard {
    */
   _renderWhenMouseMove() {
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.path === type || ALL_TYPE.disabled === type) return;
+    if (
+      ALL_TYPE[type] === undefined ||
+      ALL_TYPE.eraser === type ||
+      ALL_TYPE.path === type ||
+      ALL_TYPE.disabled === type ||
+      this.getObjects().length >= this.maxObjects
+    ) return;
     let ratio = this.ratio;
     let startX = this.startX * ratio;
     let startY = this.startY * ratio;
@@ -851,7 +899,13 @@ class WhiteBoard {
    */
   _renderWhenMouseUp() {
     let type = this.type;
-    if (ALL_TYPE[type] === undefined || ALL_TYPE.eraser === type || ALL_TYPE.text === type || ALL_TYPE.disabled === type) return;
+    if (
+      ALL_TYPE[type] === undefined ||
+      ALL_TYPE.eraser === type ||
+      ALL_TYPE.text === type ||
+      ALL_TYPE.disabled === type ||
+      this.getObjects().length >= this.maxObjects
+    ) return;
     let startX = this.startX;
     let startY = this.startY;
     let endX = this.endX;
@@ -981,7 +1035,7 @@ class WhiteBoard {
    * @return {boolean} 
    * Indicates whether add success
    */
-  render(opt,fireEVt) {
+  render(opt, fireEVt) {
     let object = this._createObject(opt);
     if (object) {
       if (this.canvas.getObjectById(object.id)) return false;
@@ -1088,6 +1142,24 @@ class WhiteBoard {
   setTextareaPosition(left, top) {
     this._textarea.style.left = this.startX * this.ratio + 'px';
     this._textarea.style.top = (this.startY - this.fontSize / 2) * this.ratio + 'px';
+  }
+  /**
+   * 
+   * set textarea style
+   * @param {object} obj 
+   */
+  setTextareaStyle(obj) {
+    if (!obj) return;
+    if (arguments.length == 1) {
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const element = obj[key];
+          this._textarea.style[key] = element;
+        }
+      }
+    } else {
+      this._textarea.style[arguments[0]] = arguments[1];
+    }
   }
   /**
    * event proxy
@@ -1212,7 +1284,7 @@ module.exports = WhiteBoard;</code></pre>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Nov 14 2017 11:31:08 GMT+0800 (中国标准时间)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Nov 16 2017 10:17:37 GMT+0800 (中国标准时间)
 </footer>
 
 <script> prettyPrint(); </script>

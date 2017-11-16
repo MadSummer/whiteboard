@@ -1,9 +1,11 @@
+import { Number } from 'core-js/library/web/timers';
+
 
 /**
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-14 14:15:59
+ * @Last Modified time: 2017-11-16 11:24:30
  */
 /**
  * @memberof WhiteBoard
@@ -277,7 +279,7 @@ class WhiteBoard {
           data.left = this.left;
           break;
         case ALL_TYPE.path:
-          data.path = this.path.join(' ').replace(/,/g, ' ');
+          data.path = this.path.join(' ').replace(/,/g, ' ').replace(/(\.[0-9]{2})[0-9]*/g,'');
           data.height = this.height;
           data.top = this.top;
           data.left = this.left;
@@ -726,7 +728,7 @@ class WhiteBoard {
           stroke: o.stroke,
           strokeWidth: +o.strokeWidth,
           radius: 90,
-          strokeLineCap: o.storkeLineCap,
+          strokeLineCap: o.storkeLineCap || this.strokeLineCap,
           id: o.id
         })
         break;
@@ -748,7 +750,7 @@ class WhiteBoard {
           top: +o.top,
           left: +o.left,
           stroke: o.stroke,
-          strokeLineJoin: o.storkeLineCap,
+          strokeLineJoin: o.storkeLineCap || this.strokeLineCap,
           strokeWidth: +o.strokeWidth,
           fill: o.fillColor,
           id: o.id
@@ -759,7 +761,7 @@ class WhiteBoard {
           stroke: o.stroke,
           strokeWidth: +o.strokeWidth,
           fill: o.fill,
-          strokeLineCap: o.storkeLineCap,
+          strokeLineCap: o.storkeLineCap || this.strokeLineCap,
           id: o.id
         })
         break;
@@ -768,7 +770,7 @@ class WhiteBoard {
           stroke: o.stroke,
           strokeWidth: +o.strokeWidth,
           fill: o.fill,
-          strokeLineCap: o.storkeLineCap,
+          strokeLineCap: o.storkeLineCap || this.strokeLineCap,
           id: o.id,
           left: +o.left,
           top: +o.top,
