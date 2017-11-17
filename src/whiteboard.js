@@ -5,7 +5,7 @@ import { Number } from 'core-js/library/web/timers';
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-16 11:24:30
+ * @Last Modified time: 2017-11-17 14:40:34
  */
 /**
  * @memberof WhiteBoard
@@ -281,6 +281,7 @@ class WhiteBoard {
         case ALL_TYPE.path:
           data.path = this.path.join(' ').replace(/,/g, ' ').replace(/(\.[0-9]{2})[0-9]*/g,'');
           data.height = this.height;
+          data.width = this.width;
           data.top = this.top;
           data.left = this.left;
           break;
