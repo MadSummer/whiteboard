@@ -5,7 +5,7 @@ import { Number } from 'core-js/library/web/timers';
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-17 14:40:34
+ * @Last Modified time: 2017-11-20 16:48:50
  */
 /**
  * @memberof WhiteBoard
@@ -279,7 +279,7 @@ class WhiteBoard {
           data.left = this.left;
           break;
         case ALL_TYPE.path:
-          data.path = this.path.join(' ').replace(/,/g, ' ').replace(/(\.[0-9]{2})[0-9]*/g,'');
+          data.path = this.path.join(' ').replace(/,/g, ' ').replace(/(\d+\.[0-9]{2})[0-9]*/g, "$1");
           data.height = this.height;
           data.width = this.width;
           data.top = this.top;
@@ -804,7 +804,7 @@ class WhiteBoard {
     let endX = this.endX * ratio;
     let endY = this.endY * ratio;
     // if start point and end point is nearly,do nothing
-    if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
+    if (Math.abs(startX - endX) < 2 && Math.abs(startY - endY) < 2) return;
     let fillColor = this.fillColor;
     let strokeWidth = this.strokeWidth;
     let stroke = this.stroke;
@@ -813,8 +813,8 @@ class WhiteBoard {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.strokeStyle = stroke;
     ctx.lineWidth = strokeWidth * this.ratio;
-    ctx.lineCap = this.storkeLineCap;
-    ctx.lineJoin = this.stokeLineJoin;
+    ctx.lineCap = this.storkeLineCap ;
+    ctx.lineJoin = this.strokeLineJoin;
     ctx.beginPath();
     switch (type) {
       case ALL_TYPE.line:
@@ -871,7 +871,7 @@ class WhiteBoard {
     let endX = this.endX;
     let endY = this.endY;
     //if start pointer and ent pointer nearly , don't add it
-    if (Math.abs(startX - endX) < 5 && Math.abs(startY - endY) < 5) return;
+    if (Math.abs(startX - endX) < 2 && Math.abs(startY - endY) < 2) return;
     let fillColor = this.fillColor;
     let strokeWidth = this.strokeWidth;
     let stroke = this.stroke;
