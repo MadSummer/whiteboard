@@ -87,7 +87,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-30 16:09:30
+ * @Last Modified time: 2017-11-30 16:20:09
  */
 /**
  * @memberof WhiteBoard
@@ -1194,6 +1194,15 @@ var _initialiseProps = function _initialiseProps() {
         startY: pointer.y,
         isMouseDown: true
       });
+      /**
+       * @event mousedown
+       * @param {fabric.Object} param.object
+       * pass event target 
+       * @see http://fabricjs.com/docs/fabric.Object.html
+       */
+      this.ep.fire(All_EVT['mouse:down'], {
+        object: opt.target
+      });
       // if eraser, remove object
       if (this.type === ALL_TYPE.eraser && opt.target) {
         opt.target && opt.target.remove();
@@ -1209,15 +1218,6 @@ var _initialiseProps = function _initialiseProps() {
           self._textarea.focus();
         }, 0);
       }
-      /**
-       * @event mousedown
-       * @param {fabric.Object} param.object
-       * pass event target 
-       * @see http://fabricjs.com/docs/fabric.Object.html
-       */
-      this.ep.fire(All_EVT['mouse:down'], {
-        object: opt.target
-      });
     },
     /**
      * @memberof WhiteBoard
