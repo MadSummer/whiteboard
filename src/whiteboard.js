@@ -1,11 +1,8 @@
-import { Number } from 'core-js/library/web/timers';
-
-
 /**
  * @Author Liu Jing 
  * @Date: 2017-10-20 11:16:02 
  * @Last Modified by: Liu Jing
- * @Last Modified time: 2017-11-20 16:48:50
+ * @Last Modified time: 2017-11-30 16:09:30
  */
 /**
  * @memberof WhiteBoard
@@ -15,6 +12,7 @@ const cursor = require('./cursor');
 const ep = require('./eventproxy');
 const polyfill = require('./polyfill');
 const Logger = require('./log');
+const tools = require('./tools');
 const DEFAULT_CONFIG = {
   width: 500, //canvas width
   height: 375, // canvas height
@@ -813,7 +811,7 @@ class WhiteBoard {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.strokeStyle = stroke;
     ctx.lineWidth = strokeWidth * this.ratio;
-    ctx.lineCap = this.storkeLineCap ;
+    ctx.lineCap = this.storkeLineCap;
     ctx.lineJoin = this.strokeLineJoin;
     ctx.beginPath();
     switch (type) {
@@ -995,14 +993,28 @@ class WhiteBoard {
    * @return {boolean} 
    * Indicates whether add success
    */
-  render(opt, fireEVt) {
-    let object = this._createObject(opt);
-    if (object) {
-      if (this.canvas.getObjectById(object.id)) return false;
-      object.from = ALL_FROM.out;
-      this.canvas.add(object);
-      return true;
+  render(opt) {
+    let arr;
+    let objects = [];
+    if (tools.isArray(opt)) {
+      arr = opt;
+    } else {
+      arr = [opt]
     }
+    if (arr.length > 1) {
+      this.canvas.renderOnAddRemove = false;
+    }
+    for (let i = 0; i < arr.length; i++) {
+      const element = arr[i];
+      let obj = this._createObject(element);
+      if (obj) {
+        if (this.canvas.getObjectById(obj.id)) continue;
+        obj.from = ALL_FROM.out;
+        this.canvas.add(obj);
+      }
+    }
+    this.canvas.renderOnAddRemove = true;
+    this.canvas.renderAll();
   }
   /**
    * export setting interface
