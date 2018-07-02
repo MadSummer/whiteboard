@@ -15,7 +15,7 @@ $(document).ready(function () {
     height:1263,
     wrap:'body'
   });
-  wb.loadBackgroundImage('http://rongkeossdev.oss-cn-beijing.aliyuncs.com/130914483085248512/aba2b52cf2c9cb6f3bb20c7830e65a42/4.jpg');
+  wb.loadBackgroundImage('https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1530511159627&di=ba7c3eae2446fb7b6365c0b284a9f6ab&imgtype=0&src=http%3A%2F%2Fg.hiphotos.baidu.com%2Fimage%2Fpic%2Fitem%2Fb8014a90f603738d1f357dacbf1bb051f919ecc5.jpg');
   wb.ep.on('mousedown', function () {
     //console.log('mouse:down')
   });

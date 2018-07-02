@@ -117,8 +117,6 @@ function _defineSetter() {
           case 'ratio':
             let width = this.setting.width;
             let height = this.setting.height;
-            let backgroundImage = this.canvas.backgroundImage;
-
             this.canvas.setWidth(width * v);
             this.canvas.setHeight(height * v);
 
